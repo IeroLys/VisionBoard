@@ -61,7 +61,7 @@ export default function Login() {
             )}
 
             <label className="block text-sm font-medium text-gray-700 mb-1 mt-3">
-            Придумайте пароль:
+            Введите пароль:
             </label>
 
             <input 
