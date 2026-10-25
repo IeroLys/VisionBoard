@@ -44,7 +44,7 @@ export default function MainPage() {
           
           <Link 
             href="/create-project" 
-            className="flex items-center justify-center w-[100px] h-[100px] bg-[#DAECFF] rounded-full hover:bg-[#c2ddf8] transition-colors group"
+             className="group flex items-center justify-center w-[150px] h-[150px] bg-[#E6F0FF] rounded-full hover:bg-[#d4e5fc] transition-colors"
           >
             <Plus size={64} className="text-main-desaturated" strokeWidth={1.5} />
           </Link>
