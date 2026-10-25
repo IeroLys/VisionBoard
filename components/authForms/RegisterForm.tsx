@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RegisterForm() {
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+  const router = useRouter();
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; general?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     
     const formData = new FormData(event.currentTarget);
@@ -14,7 +17,7 @@ export default function RegisterForm() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const newErrors: { name?: string; email?: string; password?: string } = {};
+    const newErrors: { name?: string; email?: string; password?: string; general?: string } = {};
 
     if (!name.trim()) newErrors.name = "Поле обязательно для заполнения";
 
@@ -26,14 +29,37 @@ export default function RegisterForm() {
 
     if (!password.trim()) {
       newErrors.password = "Поле обязательно для заполнения";
-    } else if (password.length < 6 || password.length > 30) {
-      newErrors.password = "Пароль должен содержать от 6 до 30 символов";
+    } else if (password.length < 8 || password.length > 30) {
+      newErrors.password = "Пароль должен содержать от 8 до 30 символов";
     }
 
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      console.log("Валидация пройдена (Регистрация):", { name, email, password });
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/auth/sign-up/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          console.log("Регистрация успешна:", data);
+          router.push("/");
+        } else {
+          newErrors.general = data.message || "Ошибка при регистрации. Возможно, этот email уже используется.";
+          setErrors(newErrors);
+        }
+      } catch (error) {
+        console.error("Ошибка сети:", error);
+        newErrors.general = "Ошибка сети. Проверьте подключение к интернету.";
+        setErrors(newErrors);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -45,6 +71,12 @@ export default function RegisterForm() {
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         
+        {errors.general && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-[20px] text-[16px] text-center font-['Inter']">
+            {errors.general}
+          </div>
+        )}
+
         <div>
           <label htmlFor="name" className="block text-[20px] text-black font-['Inter'] font-light mb-1.5 ml-2">
             Введите имя:
@@ -92,9 +124,12 @@ export default function RegisterForm() {
 
         <button 
           type="submit" 
-          className="w-full mt-4 bg-[#6B78E5] hover:bg-[#5A67D8] text-white font-normal text-[25px] py-4 rounded-[20px] transition-colors duration-200"
+          disabled={isLoading}
+          className={`w-full mt-4 text-white font-normal text-[25px] py-4 rounded-[20px] transition-colors duration-200 ${
+            isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-[#6B78E5] hover:bg-[#5A67D8]"
+          }`}
         >
-          Зарегистрироваться
+          {isLoading ? "Регистрация..." : "Зарегистрироваться"}
         </button>
       </form>
 
