@@ -1,32 +1,57 @@
+import { Camera, Settings, Plus } from "lucide-react";
 import Link from "next/link";
 
 export default function MainPage() {
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-8">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
       
-        <label className="text-[30px] text-main font-['Inter']"><b>Vision Board</b></label>
-        <div className="flex flex-col gap-4 text-sm leading-loose">
+      <div className="w-full flex flex-col gap-8">
 
-          <div className="mt-[20px] flex flex-row items-center justify-center">
-            <div className="flex items-center justify-center w-[100px] h-[100px] rounded-[15px] bg-overcast-sky border-3 border-main-desaturated">
-              <label className="mt-[0px] text-[30px] text-main font-['Inter']">📷</label>
-            </div>
+        <div className="flex flex-col md:flex-row gap-6 items-stretch">
+          
+          <div className="w-[160px] h-[160px] bg-white rounded-[20px] border border-main flex items-center justify-center shrink-0 mx-auto md:mx-0">
+            <button className="text-gray-800 hover:text-main transition-colors">
+              <Camera size={56} strokeWidth={1.5} />
+            </button>
+          </div>
 
-            <div className="flex flex-col justify-center ml-[10px] w-[550px] h-[100px] rounded-[15px] bg-overcast-sky border-3 border-main-desaturated p-8">
-              <Link href="/user"  className="text-[20px] font-['Inter'] text-main-desaturated hover:underline">
-                Jhon Doe
+          <div className="flex-1 bg-overcast-sky rounded-[20px] p-8 flex items-center justify-between">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight">
+                Название приложения
+              </h1>
+              
+              <Link 
+                href="/user" 
+                className="text-[24px] text-black font-['Inter'] font-light hover:underline"
+              >
+                Имя пользователя
               </Link>
             </div>
+            
+            <button className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated">
+              <Settings size={38} />
+            </button>
           </div>
+        </div>
 
-          <div className="flex flex-col items-center justify-center w-[660px] h-[400px] bg-white rounded-[15px] bg-overcast-sky border-3 border-main-desaturated p-2">
-            <label className="block text-sm text-[20px] text-main-desaturated text-center font-['Inter']">У вас пока нет проектов, начать работу?</label>
-            <Link href="/register"  className="block ml-[2px] mt-[5px] text-sm text-[20px] mb-3 text-center font-['Inter'] text-main-desaturated hover:underline">
-              <b>Регистрация</b>
-            </Link>
-          </div>
+        <div className="w-full min-h-[500px] bg-white rounded-[20px] border border-main flex flex-col items-center justify-center p-8">
+          
+          <p className="text-center text-main-desaturated text-[26px] font-['Inter'] font-light mb-6 leading-snug">
+            У вас пока нет проектов,<br />
+            начать работу?
+          </p>
+          
+          <Link 
+            href="/create-project" 
+            className="flex items-center justify-center w-[100px] h-[100px] bg-[#DAECFF] rounded-full hover:bg-[#c2ddf8] transition-colors group"
+          >
+            <Plus size={64} className="text-main-desaturated" strokeWidth={1.5} />
+          </Link>
 
         </div>
+
+      </div>
     </div>
-  )
+  );
 }
