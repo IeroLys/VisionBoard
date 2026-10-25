@@ -20,9 +20,13 @@ export default function MainPage() {
               <h1 className="text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight">
                 Название приложения
               </h1>
-              <p className="text-[24px] text-black font-['Inter'] font-light">
+              
+              <Link 
+                href="/user" 
+                className="text-[24px] text-black font-['Inter'] font-light hover:underline"
+              >
                 Имя пользователя
-              </p>
+              </Link>
             </div>
             
             <button className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated">
