@@ -4,6 +4,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+// Функция для перевода ошибок от Better Auth на русский язык
+function getRussianAuthError(message: string): string {
+  const msg = message.toLowerCase();
+  if (msg.includes("invalid email")) return "Неверный формат email";
+  if (msg.includes("already exists")) return "Пользователь с таким email уже зарегистрирован";
+  if (msg.includes("password") && msg.includes("character")) return "Пароль должен содержать минимум 6 символов";
+  return "Ошибка при регистрации. Проверьте введенные данные.";
+}
+
 export default function RegisterForm() {
   const router = useRouter();
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; general?: string }>({});
@@ -20,13 +29,11 @@ export default function RegisterForm() {
     const newErrors: { name?: string; email?: string; password?: string; general?: string } = {};
 
     if (!name.trim()) newErrors.name = "Поле обязательно для заполнения";
-
     if (!email.trim()) {
       newErrors.email = "Поле обязательно для заполнения";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = "Неверный формат email";
     }
-
     if (!password.trim()) {
       newErrors.password = "Поле обязательно для заполнения";
     } else if (password.length < 8 || password.length > 30) {
@@ -47,10 +54,9 @@ export default function RegisterForm() {
         const data = await response.json();
 
         if (response.ok) {
-          console.log("Регистрация успешна:", data);
           router.push("/");
         } else {
-          newErrors.general = data.message || "Ошибка при регистрации. Возможно, этот email уже используется.";
+          newErrors.general = getRussianAuthError(data.message || "Ошибка");
           setErrors(newErrors);
         }
       } catch (error) {
@@ -65,20 +71,20 @@ export default function RegisterForm() {
 
   return (
     <div className="w-full max-w-[500px] bg-white rounded-[25px] border border-main p-10 shadow-sm">
-      <h1 className="text-[34px] leading-tight text-main-desaturated text-center font-['Inter'] font-normal tracking-tight mb-5">
+      <h1 className="text-[34px] leading-tight text-main-desaturated text-center font-inter font-normal tracking-tight mb-5">
         Регистрация
       </h1>
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         
         {errors.general && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-[20px] text-[16px] text-center font-['Inter']">
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-[20px] text-[16px] text-center font-inter">
             {errors.general}
           </div>
         )}
 
         <div>
-          <label htmlFor="name" className="block text-[20px] text-black font-['Inter'] font-light mb-1.5 ml-2">
+          <label htmlFor="name" className="block text-[20px] text-black font-inter font-light mb-1.5 ml-2">
             Введите имя:
           </label>
           <input 
@@ -88,12 +94,12 @@ export default function RegisterForm() {
             className="w-full text-gray-700 px-4 py-3 bg-[#E3F0FF] border border-main-desaturated rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
           />
           {errors.name && (
-            <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-['Inter']">{errors.name}</p>
+            <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-inter">{errors.name}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-[20px] text-black font-['Inter'] font-light mb-1.5 ml-2">
+          <label htmlFor="email" className="block text-[20px] text-black font-inter font-light mb-1.5 ml-2">
             Введите email:
           </label>
           <input 
@@ -103,12 +109,12 @@ export default function RegisterForm() {
             className="w-full text-gray-700 px-4 py-3 bg-[#E3F0FF] border border-main-desaturated rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
           />
           {errors.email && (
-            <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-['Inter']">{errors.email}</p>
+            <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-inter">{errors.email}</p>
           )}
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-[20px] text-black font-['Inter'] font-light mb-1.5 ml-2">
+          <label htmlFor="password" className="block text-[20px] text-black font-inter font-light mb-1.5 ml-2">
             Придумайте пароль:
           </label>
           <input 
@@ -118,7 +124,7 @@ export default function RegisterForm() {
             className="w-full text-gray-700 px-4 py-3 bg-[#E3F0FF] border border-main-desaturated rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
           />
           {errors.password && (
-            <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-['Inter']">{errors.password}</p>
+            <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-inter">{errors.password}</p>
           )}
         </div>
 
@@ -134,10 +140,10 @@ export default function RegisterForm() {
       </form>
 
       <div className="flex flex-row items-center justify-center mt-4 gap-1.5">
-        <span className="text-[18px] text-black font-['Inter'] font-light">
+        <span className="text-[18px] text-black font-inter font-light">
           Уже есть аккаунт?
         </span>
-        <Link href="/login" className="text-[18px] text-main-desaturated hover:underline font-['Inter'] font-light">
+        <Link href="/login" className="text-[18px] text-main-desaturated hover:underline font-inter font-light">
           Войти
         </Link>
       </div>
