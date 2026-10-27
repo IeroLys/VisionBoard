@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
-export default function CreateProject() {
+export default function CreateBoardModal({ onClose }: { onClose: () => void }) {
   const [projectName, setProjectName] = useState("");
   const [error, setError] = useState("");
-  const router = useRouter();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -17,14 +15,21 @@ export default function CreateProject() {
     }
 
     console.log("Проект создан:", projectName);
-    router.push("/");
+    onClose(); 
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       
-      <div className="w-full max-w-[450px] bg-overcast-sky rounded-[25px] p-10">
+      <div className="w-full max-w-[450px] bg-overcast-sky rounded-[25px] p-10 relative shadow-2xl">
         
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-5 text-gray-500 hover:text-black transition-colors text-3xl font-light leading-none"
+        >
+          ×
+        </button>
+
         <h1 className="text-[34px] leading-tight text-main-desaturated text-center font-['Inter'] font-normal tracking-tight mb-6">
           Создание проекта
         </h1>

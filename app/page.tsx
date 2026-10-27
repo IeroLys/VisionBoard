@@ -1,7 +1,13 @@
+"use client"; 
+
 import { Camera, Settings, Plus } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import CreateBoardModal from "@/components/create-project"; 
 
 export default function MainPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
       
@@ -42,16 +48,21 @@ export default function MainPage() {
             начать работу?
           </p>
           
-          <Link 
-            href="/create-project" 
-             className="group flex items-center justify-center w-[150px] h-[150px] bg-[#E6F0FF] rounded-full hover:bg-[#d4e5fc] transition-colors"
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center justify-center w-[140px] h-[140px] bg-[#E6F0FF] rounded-full hover:bg-[#d4e5fc] transition-colors text-main-desaturated group"
           >
-            <Plus size={64} className="text-main-desaturated" strokeWidth={1.5} />
-          </Link>
+            <Plus size={80} strokeWidth={1.5} className="group-hover:scale-110 transition-transform" />
+          </button>
 
         </div>
 
       </div>
+
+      {isModalOpen && (
+        <CreateBoardModal onClose={() => setIsModalOpen(false)} />
+      )}
+
     </div>
   );
 }
