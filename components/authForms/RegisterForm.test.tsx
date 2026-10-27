@@ -138,4 +138,26 @@ describe('Компонент RegisterForm', () => {
 
     expect(await findByText('Ошибка сети. Проверьте подключение к интернету.')).toBeInTheDocument();
   });
+
+    it('должен показать дефолтную ошибку при неизвестном сообщении от сервера', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ message: 'Unknown database error' }),
+    } as unknown as Response);
+
+    const { getByLabelText, findByText, container } = render(<RegisterForm />);
+    const form = container.querySelector('form')!;
+
+    const nameInput = getByLabelText(/введите имя/i) as HTMLInputElement;
+    const emailInput = getByLabelText(/введите email/i) as HTMLInputElement;
+    const passwordInput = getByLabelText(/придумайте пароль/i) as HTMLInputElement;
+
+    fireEvent.change(nameInput, { target: { value: 'Иван' } });
+    fireEvent.change(emailInput, { target: { value: 'ivan@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'ValidPass123' } });
+
+    fireEvent.submit(form);
+
+    expect(await findByText('Ошибка при регистрации. Проверьте введенные данные.')).toBeInTheDocument();
+  });
 });
