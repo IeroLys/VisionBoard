@@ -10,6 +10,12 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     
+    env:
+      ENV: CI
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      BETTER_AUTH_URL: http://localhost:3000
+      DRIZZLE_DATABASE_URL: postgres://user:password@localhost:5432/dummy_db
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -28,11 +34,11 @@ jobs:
       
     - name: Run linter
       run: npm run lint
-      continue-on-error: true  # Если линтера нет, не упадет
+      continue-on-error: true
       
     - name: Run tests
       run: npm test
-      continue-on-error: true  # Если тестов нет, не упадет
+      continue-on-error: true
       
     - name: Build project
       run: npm run build
