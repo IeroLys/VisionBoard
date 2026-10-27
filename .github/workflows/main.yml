@@ -21,18 +21,16 @@ jobs:
         cache: 'npm'
         
     - name: Install dependencies
-      run: npm ci
+      run: npm ci --legacy-peer-deps
       
     - name: Check TypeScript types
       run: npx tsc --noEmit
       
     - name: Run linter
       run: npm run lint
-      continue-on-error: true  # Если линтера нет, не упадет
       
     - name: Run tests
       run: npm test
-      continue-on-error: true  # Если тестов нет, не упадет
       
     - name: Build project
       run: npm run build
