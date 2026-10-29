@@ -1,101 +1,108 @@
 "use client";
+
 import Link from "next/link";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+export default function LoginForm() {
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = () => {
-    let isValid = true;
-    setEmailError("");
-    setPasswordError("");
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const newErrors: { email?: string; password?: string } = {};
 
     if (!email.trim()) {
-      setEmailError("Поле обязательно для заполнения");
-      isValid = false;
+      newErrors.email = "Поле обязательно для заполнения";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      setEmailError("Неверный формат email");
-      isValid = false;
+      newErrors.email = "Неверный формат email";
     }
 
     if (!password.trim()) {
-      setPasswordError("Поле обязательно для заполнения");
-      isValid = false;
+      newErrors.password = "Поле обязательно для заполнения";
     } else if (password.length < 6 || password.length > 30) {
-      setPasswordError("Пароль должен содержать от 6 до 30 символов");
-      isValid = false;
+      newErrors.password = "Пароль должен содержать от 6 до 30 символов";
     }
 
-    if (isValid) {
-      console.log("Валидация пройдена:", { email, password });
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      console.log("Валидация пройдена (Вход):", { email, password });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className="w-full max-w-[500px] min-w-[320px] bg-white rounded-[25px] border border-main p-10 shadow-sm">
       
-      <div className="w-full max-w-[500px] bg-white rounded-[25px] border border-main p-10 shadow-sm">
+      <h1 className="text-[34px] leading-tight text-main-desaturated text-center font-['Inter'] font-normal tracking-tight mb-6">
+        Вход
+      </h1>
+      
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         
-        <h1 className="text-[34px] leading-tight text-main-desaturated text-center font-['Inter'] font-normal tracking-tight mb-6">
-          Вход
-        </h1>
-        
-        <div className="flex flex-col gap-5">
-          
-          <div>
-            <label className="block text-[20px] text-black font-['Inter'] font-light mb-1.5 ml-2">
-              Введите email:
-            </label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-gray-700 px-4 py-3 bg-[#E3F0FF] border border-main-desaturated rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
-            />
-            {emailError && (
-              <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-['Inter']">{emailError}</p>
-            )}
-          </div>
+        <div>
+          <label htmlFor="email" className="block text-[18px] text-black font-['Inter'] font-light mb-1.5 ml-2">
+            Введите email:
+          </label>
+          <input 
+            id="email"
+            name="email"
+            type="email" 
+            className="w-full text-[20px] text-gray-700 px-4 py-3 bg-[#E3F0FF] border border-main-desaturated rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
+          />
+          {errors.email && (
+            <p className="text-red-500 text-[16px] mt-1.5 ml-2 font-['Inter']">{errors.email}</p>
+          )}
+        </div>
 
-          <div>
-            <label className="block text-[20px] text-black font-['Inter'] font-light mb-1.5 ml-2">
-              Введите пароль:
-            </label>
+        <div>
+          <label htmlFor="password" className="block text-[18px] text-black font-['Inter'] font-light mb-1.5 ml-2">
+            Введите пароль:
+          </label>
+          <div className="relative">
             <input 
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full text-gray-700 px-4 py-3 bg-[#E3F0FF] border border-main-desaturated rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              className="w-full text-[20px] text-gray-700 px-4 py-3 pr-12 bg-[#E3F0FF] border border-main-desaturated rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
             />
-            {passwordError && (
-              <p className="text-red-500 text-[18px] mt-1.5 ml-2 font-['Inter']">{passwordError}</p>
-            )}
+            <button
+              type="button"
+              onMouseDown={() => setShowPassword(true)}
+              onMouseUp={() => setShowPassword(false)}
+              onMouseLeave={() => setShowPassword(false)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#6B78E5] transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
-
+          {errors.password && (
+            <p className="text-red-500 text-[16px] mt-1.5 ml-2 font-['Inter']">{errors.password}</p>
+          )}
         </div>
 
         <button 
-          type="button" 
-          onClick={handleLogin}
-          className="w-full mt-8 bg-[#6B78E5] hover:bg-[#5A67D8] text-white font-normal text-[25px] py-4 rounded-[20px] transition-colors duration-200"
+          type="submit" 
+          className="w-full mt-4 bg-[#6B78E5] hover:bg-[#5A67D8] text-white font-normal text-[18px] py-4 rounded-[20px] transition-colors duration-200"
         >
           Войти
         </button>
+      </form>
 
-        <div className="flex flex-row items-center justify-center mt-6 gap-1.5">
-          <span className="text-[19px] text-black font-['Inter'] font-light">
-            Еще нет аккаунта?
-          </span>
-          <Link href="/register" className="text-[19px] text-main-desaturated hover:underline font-['Inter'] font-light">
-            Зарегистрироваться
-          </Link>
-        </div>
-
+      <div className="flex flex-row items-center justify-center mt-6 gap-1.5">
+        <span className="text-[18px] text-black font-['Inter'] font-light">
+          Еще нет аккаунта?
+        </span>
+        <Link href="/register" className="text-[18px] text-main-desaturated hover:underline font-['Inter'] font-light">
+          Зарегистрироваться
+        </Link>
       </div>
+
     </div>
   );
 }
