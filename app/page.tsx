@@ -57,12 +57,13 @@ export default async function MainPage() {
             href="/create-project"
             className="flex items-center justify-center w-[100px] h-[100px] bg-[#DAECFF] rounded-full hover:bg-[#c2ddf8] transition-colors group"
           >
-            <Plus size={64} className="text-main-desaturated" strokeWidth={1.5} />
-          </Link>
+            <Plus size={80} strokeWidth={1.5} className="group-hover:scale-110 transition-transform" />
+          </button>
 
         </div>
 
       </div>
+
     </div>
   );
 }
