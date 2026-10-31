@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
-    branches: [main]
+    branches: [main, dev]
 
 # Cancel older runs for the same PR/branch when new commits are pushed.
 concurrency:
