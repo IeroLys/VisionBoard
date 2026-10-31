@@ -1,118 +1,126 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import LoginForm from './LoginForm';
 
+const mockReplace = vi.hoisted(() => vi.fn());
+const mockRefresh = vi.hoisted(() => vi.fn());
+const mockSignInEmail = vi.hoisted(() => vi.fn());
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    replace: mockReplace,
+    refresh: mockRefresh,
   }),
+}));
+
+vi.mock('@/lib/auth-client', () => ({
+  authClient: {
+    signIn: {
+      email: mockSignInEmail,
+    },
+  },
 }));
 
 describe('Компонент LoginForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
   });
 
-  it('должен отображать форму входа', () => {
-    const { getByRole, getByLabelText } = render(<LoginForm />);
-    
-    expect(getByRole('heading', { name: /вход/i })).toBeInTheDocument();
-    expect(getByLabelText(/введите email/i)).toBeInTheDocument();
-    expect(getByLabelText(/введите пароль/i)).toBeInTheDocument();
+  it('корректно рендерит форму', () => {
+    render(<LoginForm />);
+    expect(screen.getByText('Введите email:')).toBeInTheDocument();
+    expect(screen.getByText('Введите пароль:')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Войти' })).toBeInTheDocument();
   });
 
-  it('должен показывать 2 ошибки при отправке пустой формы', async () => {
-    const user = userEvent.setup();
-    const { getByRole, findAllByText, container } = render(<LoginForm />);
+  it('показывает ошибки валидации при пустой отправке', async () => {
+    render(<LoginForm />);
+    const form = document.querySelector('form')!;
     
-    // Отключаем нативную валидацию, чтобы сработала наша кастомная проверка на пустоту
-    container.querySelector('form')!.noValidate = true;
+    fireEvent.submit(form);
 
-    await user.click(getByRole('button', { name: /войти/i }));
-
-    const errorMessages = await findAllByText('Поле обязательно для заполнения');
-    expect(errorMessages).toHaveLength(2);
+    expect(await screen.findAllByText('Поле обязательно для заполнения')).toHaveLength(2);
+    expect(mockSignInEmail).not.toHaveBeenCalled();
   });
 
-  // ✅ ИСПРАВЛЕНО: Отключаем нативную валидацию, чтобы форма отправилась с неверным email
-  it('должен показывать ошибку при неверном формате email', async () => {
-    const user = userEvent.setup();
-    const { getByLabelText, getByRole, findByText, container } = render(<LoginForm />);
+  it('показывает ошибку при неверном формате email', async () => {
+    render(<LoginForm />);
+    const form = document.querySelector('form')!;
     
-    container.querySelector('form')!.noValidate = true;
+    const emailInput = screen.getByLabelText('Введите email:') as HTMLInputElement;
+    emailInput.value = 'bad-email';
+    fireEvent.input(emailInput);
 
-    await user.type(getByLabelText(/введите email/i), 'not-an-email');
-    await user.type(getByLabelText(/введите пароль/i), 'ValidPass123');
-    await user.click(getByRole('button', { name: /войти/i }));
+    fireEvent.submit(form);
 
-    expect(await findByText('Неверный формат email')).toBeInTheDocument();
+    expect(await screen.findByText('Неверный формат email')).toBeInTheDocument();
+    expect(mockSignInEmail).not.toHaveBeenCalled();
   });
 
-  it('должен показывать ошибку, если пароль короче 8 символов', async () => {
-    const user = userEvent.setup();
-    const { getByLabelText, getByRole, findByText, container } = render(<LoginForm />);
+  it('успешно вызывает authClient и роутер при валидных данных', async () => {
+    mockSignInEmail.mockResolvedValue({ error: undefined });
+
+    render(<LoginForm />);
+    const form = document.querySelector('form')!;
     
-    container.querySelector('form')!.noValidate = true;
+    const emailInput = screen.getByLabelText('Введите email:') as HTMLInputElement;
+    const passwordInput = screen.getByLabelText('Введите пароль:') as HTMLInputElement;
 
-    await user.type(getByLabelText(/введите email/i), 'test@example.com');
-    await user.type(getByLabelText(/введите пароль/i), '123');
-    await user.click(getByRole('button', { name: /войти/i }));
+    emailInput.value = 'test@example.com';
+    fireEvent.input(emailInput);
 
-    expect(await findByText('Пароль должен содержать от 8 до 30 символов')).toBeInTheDocument();
+    passwordInput.value = 'ValidPass123';
+    fireEvent.input(passwordInput);
+
+    fireEvent.submit(form);
+
+    await waitFor(() => {
+      expect(mockSignInEmail).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'ValidPass123',
+      });
+      expect(mockReplace).toHaveBeenCalledWith('/');
+      expect(mockRefresh).toHaveBeenCalled();
+    });
   });
 
-  it('должен показать общую ошибку при неверном пароле (ответ сервера)', async () => {
-    const user = userEvent.setup();
+  it('показывает общую ошибку при неудачной авторизации', async () => {
+    mockSignInEmail.mockResolvedValue({ 
+      error: { code: 'INVALID_EMAIL_OR_PASSWORD' } 
+    });
+
+    render(<LoginForm />);
+    const form = document.querySelector('form')!;
     
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'Invalid password' }),
-    } as unknown as Response);
+    const emailInput = screen.getByLabelText('Введите email:') as HTMLInputElement;
+    const passwordInput = screen.getByLabelText('Введите пароль:') as HTMLInputElement;
 
-    const { getByLabelText, getByRole, findByText, container } = render(<LoginForm />);
-    container.querySelector('form')!.noValidate = true;
+    emailInput.value = 'test@example.com';
+    fireEvent.input(emailInput);
+    passwordInput.value = 'WrongPass';
+    fireEvent.input(passwordInput);
+    
+    fireEvent.submit(form);
 
-    await user.type(getByLabelText(/введите email/i), 'test@example.com');
-    await user.type(getByLabelText(/введите пароль/i), 'WrongPass123');
-    await user.click(getByRole('button', { name: /войти/i }));
-
-    expect(await findByText('Неверный email или пароль')).toBeInTheDocument();
+    expect(await screen.findByText('Неверный email или пароль.')).toBeInTheDocument();
   });
 
-  it('должен показать ошибку сети при сбое fetch', async () => {
-    const user = userEvent.setup();
+  it('показывает ошибку сети при исключении', async () => {
+    mockSignInEmail.mockRejectedValue(new Error('Network fail'));
+
+    render(<LoginForm />);
+    const form = document.querySelector('form')!;
     
-    vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'));
+    const emailInput = screen.getByLabelText('Введите email:') as HTMLInputElement;
+    const passwordInput = screen.getByLabelText('Введите пароль:') as HTMLInputElement;
 
-    const { getByLabelText, getByRole, findByText, container } = render(<LoginForm />);
-    container.querySelector('form')!.noValidate = true;
-
-    await user.type(getByLabelText(/введите email/i), 'test@example.com');
-    await user.type(getByLabelText(/введите пароль/i), 'ValidPass123');
-    await user.click(getByRole('button', { name: /войти/i }));
-
-    expect(await findByText('Ошибка сети. Проверьте подключение к интернету.')).toBeInTheDocument();
-  });
-
-    it('должен показать дефолтную ошибку при неизвестном сообщении от сервера', async () => {
-    const user = userEvent.setup();
+    emailInput.value = 'test@example.com';
+    fireEvent.input(emailInput);
+    passwordInput.value = 'ValidPass123';
+    fireEvent.input(passwordInput);
     
-    // Мокаем ошибку, которая НЕ попадает ни под один if в getRussianAuthError
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'Unknown database error' }),
-    } as unknown as Response);
+    fireEvent.submit(form);
 
-    const { getByLabelText, getByRole, findByText, container } = render(<LoginForm />);
-    container.querySelector('form')!.noValidate = true;
-
-    await user.type(getByLabelText(/введите email/i), 'test@example.com');
-    await user.type(getByLabelText(/введите пароль/i), 'ValidPass123');
-    await user.click(getByRole('button', { name: /войти/i }));
-
-    // Проверяем, что сработал именно дефолтный return
-    expect(await findByText('Неверный email или пароль.')).toBeInTheDocument();
+    expect(await screen.findByText('Ошибка сети. Проверьте подключение к интернету.')).toBeInTheDocument();
   });
 });

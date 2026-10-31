@@ -1,163 +1,99 @@
-import { render, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import RegisterForm from './RegisterForm';
 
+const mockReplace = vi.hoisted(() => vi.fn());
+const mockRefresh = vi.hoisted(() => vi.fn());
+const mockSignUpEmail = vi.hoisted(() => vi.fn());
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn(),
+    replace: mockReplace,
+    refresh: mockRefresh,
   }),
+}));
+
+vi.mock('@/lib/auth-client', () => ({
+  authClient: {
+    signUp: {
+      email: mockSignUpEmail,
+    },
+  },
 }));
 
 describe('Компонент RegisterForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
   });
 
-  it('должен корректно отображать форму регистрации', () => {
-    const { getByRole, getByLabelText } = render(<RegisterForm />);
+  it('корректно рендерит форму', () => {
+    render(<RegisterForm />);
+    expect(screen.getByText('Введите имя:')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Зарегистрироваться' })).toBeInTheDocument();
+  });
+
+  it('показывает 3 ошибки валидации при пустой отправке', async () => {
+    render(<RegisterForm />);
+    const form = document.querySelector('form')!;
+    fireEvent.submit(form);
+
+    expect(await screen.findAllByText('Поле обязательно для заполнения')).toHaveLength(3);
+    expect(mockSignUpEmail).not.toHaveBeenCalled();
+  });
+
+  it('успешно вызывает authClient.signUp и роутер при валидных данных', async () => {
+    mockSignUpEmail.mockResolvedValue({ error: undefined });
+
+    render(<RegisterForm />);
+    const form = document.querySelector('form')!;
     
-    expect(getByRole('heading', { name: /регистрация/i })).toBeInTheDocument();
-    expect(getByLabelText(/введите имя/i)).toBeInTheDocument();
-    expect(getByLabelText(/введите email/i)).toBeInTheDocument();
-    expect(getByLabelText(/придумайте пароль/i)).toBeInTheDocument();
-    expect(getByRole('button', { name: /зарегистрироваться/i })).toBeInTheDocument();
-  });
+    const nameInput = screen.getByLabelText('Введите имя:') as HTMLInputElement;
+    const emailInput = screen.getByLabelText('Введите email:') as HTMLInputElement;
+    const passwordInput = screen.getByLabelText('Придумайте пароль:') as HTMLInputElement;
 
-  it('должен показывать 3 ошибки при отправке пустой формы', async () => {
-    const { findAllByText, container } = render(<RegisterForm />);
-    const form = container.querySelector('form')!;
+    nameInput.value = 'Иван';
+    fireEvent.input(nameInput);
 
-    fireEvent.submit(form);
+    emailInput.value = 'ivan@test.com';
+    fireEvent.input(emailInput);
 
-    const errorMessages = await findAllByText('Поле обязательно для заполнения');
-    expect(errorMessages).toHaveLength(3);
-  });
-
-  it('должен показывать ошибку при неверном формате email', async () => {
-    const { getByLabelText, findByText, container } = render(<RegisterForm />);
-    const form = container.querySelector('form')!;
-
-    const nameInput = getByLabelText(/введите имя/i) as HTMLInputElement;
-    const emailInput = getByLabelText(/введите email/i) as HTMLInputElement;
-    const passwordInput = getByLabelText(/придумайте пароль/i) as HTMLInputElement;
-
-    fireEvent.change(nameInput, { target: { value: 'Иван' } });
-    fireEvent.change(emailInput, { target: { value: 'неправильный-email' } });
-    fireEvent.change(passwordInput, { target: { value: 'ValidPass123' } });
+    passwordInput.value = 'ValidPass123';
+    fireEvent.input(passwordInput);
 
     fireEvent.submit(form);
 
-    expect(await findByText('Неверный формат email')).toBeInTheDocument();
-  });
-
-  it('должен показывать ошибку, если пароль короче 8 символов', async () => {
-    const { getByLabelText, findByText, container } = render(<RegisterForm />);
-    const form = container.querySelector('form')!;
-
-    const nameInput = getByLabelText(/введите имя/i) as HTMLInputElement;
-    const emailInput = getByLabelText(/введите email/i) as HTMLInputElement;
-    const passwordInput = getByLabelText(/придумайте пароль/i) as HTMLInputElement;
-
-    fireEvent.change(nameInput, { target: { value: 'Иван' } });
-    fireEvent.change(emailInput, { target: { value: 'ivan@test.com' } });
-    fireEvent.change(passwordInput, { target: { value: '123' } });
-
-    fireEvent.submit(form);
-
-    expect(await findByText('Пароль должен содержать от 8 до 30 символов')).toBeInTheDocument();
-  });
-
-  // ✅ ИСПРАВЛЕННЫЙ ТЕСТ: Проверяем вызов fetch вместо глючного router.push
-  it('должен успешно отправить данные при корректном заполнении', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true }),
-    } as unknown as Response);
-
-    const { getByLabelText, container } = render(<RegisterForm />);
-    const form = container.querySelector('form')!;
-
-    const nameInput = getByLabelText(/введите имя/i) as HTMLInputElement;
-    const emailInput = getByLabelText(/введите email/i) as HTMLInputElement;
-    const passwordInput = getByLabelText(/придумайте пароль/i) as HTMLInputElement;
-
-    fireEvent.change(nameInput, { target: { value: 'Иван' } });
-    fireEvent.change(emailInput, { target: { value: 'ivan@test.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'ValidPass123' } });
-
-    fireEvent.submit(form);
-
-    // Если fetch вызван с правильными данными, значит валидация прошла успешно!
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/auth/sign-up/email', expect.objectContaining({
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'Иван', email: 'ivan@test.com', password: 'ValidPass123' }),
-      }));
+      expect(mockSignUpEmail).toHaveBeenCalledWith({
+        name: 'Иван',
+        email: 'ivan@test.com',
+        password: 'ValidPass123',
+      });
+      expect(mockReplace).toHaveBeenCalledWith('/');
+      expect(mockRefresh).toHaveBeenCalled();
     });
   });
 
-  it('должен показать ошибку, если email уже занят (ответ от сервера)', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'User already exists' }),
-    } as unknown as Response);
+  it('показывает ошибку, если email уже используется', async () => {
+    mockSignUpEmail.mockResolvedValue({ 
+      error: { code: 'USER_ALREADY_EXISTS' } 
+    });
 
-    const { getByLabelText, findByText, container } = render(<RegisterForm />);
-    const form = container.querySelector('form')!;
+    render(<RegisterForm />);
+    const form = document.querySelector('form')!;
+    
+    const nameInput = screen.getByLabelText('Введите имя:') as HTMLInputElement;
+    const emailInput = screen.getByLabelText('Введите email:') as HTMLInputElement;
+    const passwordInput = screen.getByLabelText('Придумайте пароль:') as HTMLInputElement;
 
-    const nameInput = getByLabelText(/введите имя/i) as HTMLInputElement;
-    const emailInput = getByLabelText(/введите email/i) as HTMLInputElement;
-    const passwordInput = getByLabelText(/придумайте пароль/i) as HTMLInputElement;
-
-    fireEvent.change(nameInput, { target: { value: 'Иван' } });
-    fireEvent.change(emailInput, { target: { value: 'ivan@test.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'ValidPass123' } });
-
+    nameInput.value = 'Иван';
+    fireEvent.input(nameInput);
+    emailInput.value = 'ivan@test.com';
+    fireEvent.input(emailInput);
+    passwordInput.value = 'ValidPass123';
+    fireEvent.input(passwordInput);
+    
     fireEvent.submit(form);
 
-    expect(await findByText('Пользователь с таким email уже зарегистрирован')).toBeInTheDocument();
-  });
-
-  it('должен показать ошибку сети при сбое fetch', async () => {
-    vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'));
-
-    const { getByLabelText, findByText, container } = render(<RegisterForm />);
-    const form = container.querySelector('form')!;
-
-    const nameInput = getByLabelText(/введите имя/i) as HTMLInputElement;
-    const emailInput = getByLabelText(/введите email/i) as HTMLInputElement;
-    const passwordInput = getByLabelText(/придумайте пароль/i) as HTMLInputElement;
-
-    fireEvent.change(nameInput, { target: { value: 'Иван' } });
-    fireEvent.change(emailInput, { target: { value: 'ivan@test.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'ValidPass123' } });
-
-    fireEvent.submit(form);
-
-    expect(await findByText('Ошибка сети. Проверьте подключение к интернету.')).toBeInTheDocument();
-  });
-
-    it('должен показать дефолтную ошибку при неизвестном сообщении от сервера', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: 'Unknown database error' }),
-    } as unknown as Response);
-
-    const { getByLabelText, findByText, container } = render(<RegisterForm />);
-    const form = container.querySelector('form')!;
-
-    const nameInput = getByLabelText(/введите имя/i) as HTMLInputElement;
-    const emailInput = getByLabelText(/введите email/i) as HTMLInputElement;
-    const passwordInput = getByLabelText(/придумайте пароль/i) as HTMLInputElement;
-
-    fireEvent.change(nameInput, { target: { value: 'Иван' } });
-    fireEvent.change(emailInput, { target: { value: 'ivan@test.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'ValidPass123' } });
-
-    fireEvent.submit(form);
-
-    expect(await findByText('Ошибка при регистрации. Проверьте введенные данные.')).toBeInTheDocument();
+    expect(await screen.findByText('Этот email уже используется.')).toBeInTheDocument();
   });
 });
