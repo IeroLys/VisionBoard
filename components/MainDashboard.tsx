@@ -75,7 +75,6 @@ export default function MainDashboard() {
             <div className="w-full flex flex-col items-center gap-4">
               <div className={`w-full max-w-[900px] grid grid-cols-1 md:grid-cols-2 gap-4 pr-2 ${showAll ? 'max-h-[400px] overflow-y-auto pb-4' : ''}`}>
                 {visibleProjects.map((project) => (
-                  // Карточка проекта это Link, по нажатии  на карточку происходит переход на страницу проекта
                   <Link 
                     key={project.id}
                     href={`/project/${project.id}`}
@@ -87,8 +86,8 @@ export default function MainDashboard() {
                     
                     <button 
                       onClick={(e) => {
-                        e.preventDefault(); // При нажатии на троеточие переход на страницу проекта НЕ ПРОИСХОДИТ
-                        // Здесь должен быть код при нажатии на троеточие 
+                        e.preventDefault(); 
+                        {/*Здесь должен быть код при нажатии на троеточие*/}
                       }}
                       className="bg-white p-2 rounded-[10px] shadow-sm hover:bg-gray-50 text-black"
                     >

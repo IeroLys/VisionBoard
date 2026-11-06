@@ -46,7 +46,6 @@ export default function ProjectForm({ id }: { id: string }) {
             <div className="w-full flex flex-col items-center gap-4">
               <div className={`w-full max-w-[900px] grid grid-cols-1 md:grid-cols-2 gap-4 pr-2 ${showAll ? 'max-h-[400px] overflow-y-auto pb-4' : ''}`}>
                 {visibleCanvs.map((canvas) => ( 
-                  // Карточка холста
                   <div key={canvas.id}>
                     <Link
                       href={`/canvas/${canvas.id}`}
@@ -59,7 +58,7 @@ export default function ProjectForm({ id }: { id: string }) {
                       <button 
                         onClick={(e) => {
                           e.preventDefault(); 
-                          // Здесь должен быть код при нажатии на троеточие 
+                          {/*Здесь должен быть код при нажатии на троеточие */}
                         }}
                         className="bg-white p-2 rounded-[10px] shadow-sm hover:bg-gray-50 text-black"
                       >

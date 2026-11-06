@@ -29,7 +29,6 @@ export default function TodoCard({ title }: TodoProps) {
               <ChevronUp size={20} className="text-black"/>
             </button>
           </div>
-          // PROGRESS BAR
           <div className="pr-4 pl-4 p text-center">
             <div className="w-full bg-[#9FCEFF] rounded-full h-6 overflow-hidden">
               <div 
@@ -53,7 +52,6 @@ export default function TodoCard({ title }: TodoProps) {
             Добавить задачу
           </button>
 
-          // PROGRESS BAR
           <div className="p-4 text-center">
             <div className="w-full bg-[#9FCEFF] rounded-full h-6 overflow-hidden">
               <div 
