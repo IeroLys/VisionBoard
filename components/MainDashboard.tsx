@@ -75,17 +75,25 @@ export default function MainDashboard() {
             <div className="w-full flex flex-col items-center gap-4">
               <div className={`w-full max-w-[900px] grid grid-cols-1 md:grid-cols-2 gap-4 pr-2 ${showAll ? 'max-h-[400px] overflow-y-auto pb-4' : ''}`}>
                 {visibleProjects.map((project) => (
-                  <div
+                  <Link 
                     key={project.id}
+                    href={`/project/${project.id}`}
                     className="group bg-overcast-sky rounded-[15px] p-6 h-[160px] flex justify-between items-start hover:bg-[#c2ddf8] transition-colors cursor-pointer"
                   >
                     <span className="text-[24px] font-['Inter'] font-light text-black transition-transform duration-200 origin-left group-hover:scale-105">
                       {project.title}
                     </span>
-                    <button className="bg-white p-2 rounded-[10px] shadow-sm hover:bg-gray-50 text-black">
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault(); 
+                        {/*Здесь должен быть код при нажатии на троеточие*/}
+                      }}
+                      className="bg-white p-2 rounded-[10px] shadow-sm hover:bg-gray-50 text-black"
+                    >
                       <MoreHorizontal size={20} />
                     </button>
-                  </div>
+                  </Link>
                 ))}
 
                 {!showAll && (
