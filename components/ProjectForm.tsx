@@ -4,6 +4,7 @@ import { useState } from "react";
 import CreateCanvasModal from "@/components/create-canvas";
 import { Plus, MoreHorizontal, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+import TodoCard from "@/components/todo-card";
 
 type Canvas = { id: number; title: string };
 
@@ -44,27 +45,30 @@ export default function ProjectForm({ id }: { id: string }) {
           ) : (
             <div className="w-full flex flex-col items-center gap-4">
               <div className={`w-full max-w-[900px] grid grid-cols-1 md:grid-cols-2 gap-4 pr-2 ${showAll ? 'max-h-[400px] overflow-y-auto pb-4' : ''}`}>
-                {visibleCanvs.map((canvas) => (
+                {visibleCanvs.map((canvas) => ( 
                   // Карточка холста
-                  <Link 
-                    key={canvas.id}
-                    href={`/canvas/${canvas.id}`}
-                    className="group bg-overcast-sky rounded-[15px] p-6 h-[160px] flex justify-between items-start hover:bg-[#c2ddf8] transition-colors cursor-pointer"
-                  >
-                    <span className="text-[24px] font-['Inter'] font-light text-black transition-transform duration-200 origin-left group-hover:scale-105">
-                      {canvas.title}
-                    </span>
-                    
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault(); 
-                        // Здесь должен быть код при нажатии на троеточие 
-                      }}
-                      className="bg-white p-2 rounded-[10px] shadow-sm hover:bg-gray-50 text-black"
+                  <div key={canvas.id}>
+                    <Link
+                      href={`/canvas/${canvas.id}`}
+                      className="group bg-overcast-sky rounded-[15px] p-6 h-[160px] flex justify-between items-start hover:bg-[#c2ddf8] transition-colors cursor-pointer"
                     >
-                      <MoreHorizontal size={20} />
-                    </button>
-                  </Link>
+                      <span className="text-[24px] font-['Inter'] font-light text-black transition-transform duration-200 origin-left group-hover:scale-105">
+                        {canvas.title}
+                      </span>
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault(); 
+                          // Здесь должен быть код при нажатии на троеточие 
+                        }}
+                        className="bg-white p-2 rounded-[10px] shadow-sm hover:bg-gray-50 text-black"
+                      >
+                        <MoreHorizontal size={20} />
+                      </button>
+                    </Link>
+
+                    <TodoCard title={canvas.title}></TodoCard>
+                  </div>
                 ))}
 
                 {!showAll && (
