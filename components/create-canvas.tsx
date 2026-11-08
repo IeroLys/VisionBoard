@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function CreateCanvasModal({ 
   onClose, 
@@ -8,13 +8,22 @@ export default function CreateCanvasModal({
   existingCanvs = []
 }: { 
   onClose: () => void; 
-  onCreate: (name: string) => void; 
+  onCreate: (name: string) => Promise<string | void> | string | void;
   existingCanvs?: string[];
 }) {
   const [canvName, setCanvName] = useState("");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedName = canvName.trim();
@@ -33,14 +42,31 @@ export default function CreateCanvasModal({
       return;
     }
 
-    onCreate(trimmedName); 
+    setPending(true);
+    try {
+      const serverError = await onCreate(trimmedName);
+      if (serverError) setError(serverError);
+    } catch {
+      setError("Не удалось сохранить. Попробуйте ещё раз");
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in duration-150"
+    >
       <div className="w-full max-w-[450px] bg-overcast-sky rounded-[25px] p-10 relative shadow-2xl">
         
-        <button 
+        <button
+          type="button"
+          aria-label="Закрыть"
           onClick={onClose}
           className="absolute top-4 right-5 text-gray-500 hover:text-black transition-colors text-3xl font-light leading-none"
         >
@@ -58,6 +84,8 @@ export default function CreateCanvasModal({
           </label>
 
           <input 
+          autoFocus
+          maxLength={100}
             id="projectName"
             name="projectName"
             type="text" 
@@ -74,10 +102,11 @@ export default function CreateCanvasModal({
           )}
 
           <button 
-            type="submit" 
-            className="w-full mt-6 bg-[#6B78E5] hover:bg-[#5A67D8] text-white font-normal text-[22px] py-4 rounded-[20px] transition-colors duration-200"
+            type="submit"
+            disabled={pending}
+            className="w-full mt-6 disabled:opacity-60 bg-[#6B78E5] hover:bg-[#5A67D8] text-white font-normal text-[22px] py-4 rounded-[20px] transition-colors duration-200"
           >
-            Создать
+            {pending ? "Создание..." : "Создать"}
           </button>
         </form>
 
