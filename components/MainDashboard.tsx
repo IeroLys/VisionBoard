@@ -1,22 +1,50 @@
 "use client";
 
-import { Camera, Settings, Plus, MoreHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import { Camera, Settings, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import LogoutButton from "@/components/LogoutButton";
 import CreateBoardModal from "@/components/create-project";
+import ItemMenu from "@/components/item-menu";
+import { createProject, deleteProject, renameProject } from "@/lib/actions/projects";
+import { formatDateRu, pluralRu } from "@/lib/format";
 
-type Project = { id: number; title: string };
+type Project = { id: string; title: string; canvasCount?: number; createdAt?: string };
 
-export default function MainDashboard() {
+export default function MainDashboard({
+  initialProjects = [],
+  userName,
+}: {
+  initialProjects?: Project[];
+  userName?: string;
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [showAll, setShowAll] = useState(false);
 
-  const handleCreateProject = (projectName: string) => {
-    const newProject = { id: Date.now(), title: projectName };
-    setProjects((prev) => [...prev, newProject]);
+  const handleCreateProject = async (projectName: string) => {
+    const result = await createProject(projectName);
+    if (!result.ok) return result.error;
+    const { id, title, createdAt } = result.data;
+    setProjects((prev) => [
+      ...prev,
+      { id, title, canvasCount: 0, createdAt: new Date(createdAt).toISOString() },
+    ]);
     setIsModalOpen(false);
+  };
+
+  const handleRenameProject = async (projectId: string, title: string) => {
+    const result = await renameProject(projectId, title);
+    if (!result.ok) return result.error;
+    setProjects((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, title: result.data.title } : p)),
+    );
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    const result = await deleteProject(projectId);
+    if (!result.ok) return result.error;
+    setProjects((prev) => prev.filter((p) => p.id !== projectId));
   };
 
   const visibleProjects = showAll ? projects : projects.slice(0, 3);
@@ -40,7 +68,7 @@ export default function MainDashboard() {
                 href="/user"
                 className="text-[24px] text-black font-['Inter'] font-light hover:underline"
               >
-                Имя пользователя
+                {userName || "Имя пользователя"}
               </Link>
             </div>
 
@@ -78,21 +106,31 @@ export default function MainDashboard() {
                   <Link 
                     key={project.id}
                     href={`/project/${project.id}`}
-                    className="group bg-overcast-sky rounded-[15px] p-6 h-[160px] flex justify-between items-start hover:bg-[#c2ddf8] transition-colors cursor-pointer"
+                    className="group bg-overcast-sky rounded-[15px] p-6 h-[160px] flex justify-between items-start gap-3 hover:bg-[#c2ddf8] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
                   >
-                    <span className="text-[24px] font-['Inter'] font-light text-black transition-transform duration-200 origin-left group-hover:scale-105">
-                      {project.title}
-                    </span>
-                    
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault(); 
-                        {/*Здесь должен быть код при нажатии на троеточие*/}
+                    <div className="flex flex-col justify-between h-full min-w-0">
+                      <span className="text-[24px] font-['Inter'] font-light text-black transition-transform duration-200 origin-left group-hover:scale-105 truncate">
+                        {project.title}
+                      </span>
+                      <span className="text-[14px] font-['Inter'] text-main-desaturated/80">
+                        {project.canvasCount !== undefined &&
+                          `${project.canvasCount} ${pluralRu(project.canvasCount, ["холст", "холста", "холстов"])}`}
+                        {project.canvasCount !== undefined && project.createdAt && " · "}
+                        {project.createdAt && `создан ${formatDateRu(project.createdAt)}`}
+                      </span>
+                    </div>
+
+                    <ItemMenu
+                      itemTitle={project.title}
+                      kind={{
+                        label: "проекта",
+                        renameTitle: "Переименование",
+                        deleteTitle: "Удалить проект?",
+                        deleteWarning: "Все холсты и задачи проекта будут удалены без возможности восстановления.",
                       }}
-                      className="bg-white p-2 rounded-[10px] shadow-sm hover:bg-gray-50 text-black"
-                    >
-                      <MoreHorizontal size={20} />
-                    </button>
+                      onRename={(title) => handleRenameProject(project.id, title)}
+                      onDelete={() => handleDeleteProject(project.id)}
+                    />
                   </Link>
                 ))}
 

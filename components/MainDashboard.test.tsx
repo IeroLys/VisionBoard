@@ -3,6 +3,15 @@ import { describe, it, expect, vi } from 'vitest';
 
 import MainDashboard from './MainDashboard'; 
 
+vi.mock('@/lib/actions/projects', () => ({
+  createProject: vi.fn(async (title: string) => ({
+    ok: true,
+    data: { id: crypto.randomUUID(), title, createdAt: new Date() },
+  })),
+  renameProject: vi.fn(async (id: string, title: string) => ({ ok: true, data: { id, title } })),
+  deleteProject: vi.fn(async (id: string) => ({ ok: true, data: { id } })),
+}));
+
 vi.mock('@/components/LogoutButton', () => ({
   default: () => <button aria-label="Выйти">Mocked Logout</button>
 }));

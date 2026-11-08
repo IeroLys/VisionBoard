@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Geist, Geist_Mono, Montserrat } from "next/font/google"
 
 import "./globals.css"
@@ -13,6 +14,11 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: { default: "Vision Board", template: "%s · Vision Board" },
+  description: "Планируйте проекты, холсты и задачи в одном месте",
+}
 
 export default function RootLayout({
   children,
