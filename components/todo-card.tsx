@@ -72,7 +72,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
   );
 
   return (
-    <div className="rounded-[15px] overflow-hidden flex flex-col-reverse shadow-sm p-3">
+    <div className="rounded-[15px] overflow-hidden flex flex-col shadow-sm p-3 bg-white">
       {!isExpanded ?
         <div className="flex flex-col">
           <div className="p-4 flex justify-between items-center bg-white">

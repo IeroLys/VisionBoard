@@ -109,10 +109,10 @@ export default function MainDashboard({
                     className="group bg-overcast-sky rounded-[15px] p-6 h-[160px] flex justify-between items-start gap-3 hover:bg-[#c2ddf8] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
                   >
                     <div className="flex flex-col justify-between h-full min-w-0">
-                      <span className="text-[24px] font-['Inter'] font-light text-black transition-transform duration-200 origin-left group-hover:scale-105 truncate">
+                      <span className="text-[26px] font-['Inter'] font-light text-black transition-transform duration-200 origin-left group-hover:scale-105 truncate">
                         {project.title}
                       </span>
-                      <span className="text-[14px] font-['Inter'] text-main-desaturated/80">
+                      <span className="text-[17px] font-['Inter'] text-main-desaturated/80">
                         {project.canvasCount !== undefined &&
                           `${project.canvasCount} ${pluralRu(project.canvasCount, ["холст", "холста", "холстов"])}`}
                         {project.canvasCount !== undefined && project.createdAt && " · "}
