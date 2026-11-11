@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { LayoutDashboard } from "lucide-react";
+import Link from "next/link";
 import PageHeader from "@/components/page-header";
 import TodoCard from "@/components/todo-card";
 import { getServerSession } from "@/lib/server/session";
@@ -27,14 +28,22 @@ export default async function CanvasPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
       <div className="w-full max-w-[1100px] flex flex-col gap-8">
+        
+        {/* Хлебные крошки */}
+        <nav className="flex items-center gap-2 text-gray-500 text-[16px] font-['Inter'] font-light">
+          <Link href="/" className="hover:text-main-desaturated transition-colors">
+            Мои проекты
+          </Link>
+          <span>/</span>
+          <Link href={projectHref} className="hover:text-main-desaturated transition-colors">
+            {canvas.project.title}
+          </Link>
+          <span>/</span>
+          <span className="text-main-desaturated">{canvas.title}</span>
+        </nav>
+
         <PageHeader
-          backHref={projectHref}
-          backLabel="К проекту"
-          breadcrumbs={[
-            { label: "Мои проекты", href: "/" },
-            { label: canvas.project.title, href: projectHref },
-            { label: canvas.title },
-          ]}
+          homeHref={projectHref}
           title={canvas.title}
         />
 
