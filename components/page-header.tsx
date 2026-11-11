@@ -19,28 +19,42 @@ export default function PageHeader({
         <h1 className="text-[30px] md:text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight truncate">
           {title}
         </h1>
+        
+        {/* ИСПРАВЛЕНО: Добавлен рендеринг subtitle */}
+        {subtitle && (
+          <div className="text-gray-600 text-[16px] font-['Inter'] font-light leading-snug">
+            {subtitle}
+          </div>
+        )}
       </div>
 
-      {/* Правая часть: Иконки */}
+      {/* Правая часть: Иконки и действия */}
       <div className="flex items-center gap-3 shrink-0">
-        {/* Иконка Участники */}
-        <button
-          aria-label="Участники"
-          title="Участники"
-          className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
-        >
-          <Users size={38} /> {/* Увеличили с 28 до 34 */}
-        </button>
+        {/* Если переданы кастомные actions, рендерим их, иначе стандартные иконки */}
+        {actions ? (
+          actions
+        ) : (
+          <>
+            {/* Иконка Участники */}
+            <button
+              aria-label="Участники"
+              title="Участники"
+              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
+            >
+              <Users size={38} />
+            </button>
 
-        {/* Иконка Домой */}
-        <Link
-          href={homeHref}
-          aria-label="На главную"
-          title="На главную"
-          className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
-        >
-          <Home size={38} /> {/* Увеличили с 28 до 34 */}
-        </Link>
+            {/* Иконка Домой */}
+            <Link
+              href={homeHref}
+              aria-label="На главную"
+              title="На главную"
+              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
+            >
+              <Home size={38} />
+            </Link>
+          </>
+        )}
       </div>
     </div>
   );

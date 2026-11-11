@@ -19,16 +19,26 @@ export function DialogShell({
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.stopPropagation(); // Предотвращаем всплытие, чтобы не закрыть случайно родительские модалки
+        onClose();
+      }
     };
-    document.addEventListener("keydown", onKey);
+    
+    // Сохраняем текущее значение overflow, чтобы восстановить его позже
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    
+    document.addEventListener("keydown", onKey);
+    
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
   }, [onClose]);
+
+  // Проверка на наличие document для безопасности (хотя use client гарантирует клиентскую среду)
+  if (typeof document === 'undefined') return null;
 
   return createPortal(
     <div
@@ -37,6 +47,7 @@ export function DialogShell({
       aria-label={title}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => {
+        // Закрываем только если клик был именно по затемненному фону, а не по карточке
         if (e.target === e.currentTarget) onClose();
       }}
       className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in duration-150"
@@ -45,7 +56,10 @@ export function DialogShell({
         <button
           type="button"
           aria-label="Закрыть"
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation(); // Важно для предотвращения всплытия к Link
+            onClose();
+          }}
           className="absolute top-4 right-5 text-gray-500 hover:text-black transition-colors text-3xl font-light leading-none"
         >
           ×
@@ -106,16 +120,23 @@ export function ConfirmDialog({
       <div className="mt-8 flex gap-3">
         <button
           type="button"
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           className="flex-1 bg-white hover:bg-gray-50 text-black font-normal text-[18px] py-3 rounded-[20px] transition-colors"
         >
           Отмена
         </button>
-        <button
+                <button
           type="button"
           autoFocus
           disabled={pending}
-          onClick={handleConfirm}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleConfirm();
+          }}
+
           className="flex-1 bg-red-500 hover:bg-red-600 text-white font-normal text-[18px] py-3 rounded-[20px] transition-colors disabled:opacity-60"
         >
           {pending ? "Удаление..." : confirmLabel}
@@ -145,6 +166,8 @@ export function RenameDialog({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation(); // Предотвращаем всплытие события submit
+    
     const trimmed = value.trim();
     if (!trimmed) {
       setError("Название не может быть пустым");
@@ -176,7 +199,7 @@ export function RenameDialog({
           {label}
         </label>
         <input
-          id="renameInput"
+          id="renameInput" // Связь с label
           autoFocus
           onFocus={(e) => e.currentTarget.select()}
           value={value}
@@ -184,6 +207,11 @@ export function RenameDialog({
           onChange={(e) => {
             setValue(e.target.value);
             setError("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.stopPropagation(); // Доп. защита
+            }
           }}
           className="w-full text-[20px] text-gray-700 px-4 py-3 bg-white rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
         />
@@ -193,6 +221,7 @@ export function RenameDialog({
         <button
           type="submit"
           disabled={pending}
+          onClick={(e) => e.stopPropagation()} // Защита от всплытия клика
           className="w-full mt-6 bg-[#6B78E5] hover:bg-[#5A67D8] text-white font-normal text-[22px] py-4 rounded-[20px] transition-colors duration-200 disabled:opacity-60"
         >
           {pending ? "Сохранение..." : "Сохранить"}
