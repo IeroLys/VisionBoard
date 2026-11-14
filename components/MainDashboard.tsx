@@ -54,7 +54,7 @@ export default function MainDashboard({
       <div className="w-full max-w-[1100px] flex flex-col gap-8">
         <div className="flex flex-col md:flex-row gap-6 items-stretch">
           <div className="w-[160px] h-[160px] bg-white rounded-[20px] border border-main flex items-center justify-center shrink-0 mx-auto md:mx-0">
-            <button className="text-gray-800 hover:text-main transition-colors">
+            <button className="text-gray-800 hover:text-main transition-colors" aria-label="Сменить аватар">
               <Camera size={56} strokeWidth={1.5} />
             </button>
           </div>
@@ -94,6 +94,7 @@ export default function MainDashboard({
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}
+                aria-label="Создать проект"
                 className="flex items-center justify-center w-[140px] h-[140px] bg-[#E6F0FF] rounded-full hover:bg-[#d4e5fc] transition-colors text-main-desaturated group"
               >
                 <Plus size={80} strokeWidth={1.5} className="group-hover:scale-110 transition-transform" />
@@ -120,23 +121,26 @@ export default function MainDashboard({
                       </span>
                     </div>
 
-                    <ItemMenu
-                      itemTitle={project.title}
-                      kind={{
-                        label: "проекта",
-                        renameTitle: "Переименование",
-                        deleteTitle: "Удалить проект?",
-                        deleteWarning: "Все холсты и задачи проекта будут удалены без возможности восстановления.",
-                      }}
-                      onRename={(title) => handleRenameProject(project.id, title)}
-                      onDelete={() => handleDeleteProject(project.id)}
-                    />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <ItemMenu
+                        itemTitle={project.title}
+                        kind={{
+                          label: "проекта",
+                          renameTitle: "Переименование",
+                          deleteTitle: "Удалить проект?",
+                          deleteWarning: "Все холсты и задачи проекта будут удалены без возможности восстановления.",
+                        }}
+                        onRename={(title) => handleRenameProject(project.id, title)}
+                        onDelete={() => handleDeleteProject(project.id)}
+                      />
+                    </div>
                   </Link>
                 ))}
 
                 {!showAll && (
                   <button
                     onClick={() => setIsModalOpen(true)}
+                    aria-label="Создать проект"
                     className="bg-overcast-sky rounded-[15px] h-[160px] flex items-center justify-center hover:bg-[#c2ddf8] transition-colors group"
                   >
                     <div className="w-[70px] h-[70px] bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">

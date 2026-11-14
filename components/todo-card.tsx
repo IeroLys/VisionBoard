@@ -18,7 +18,6 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [tasks, setTasks] = useState<TodoTask[]>(initialTasks);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [error, setError] = useState("");
 
   const taskCounter = tasks.length;
   const completedCounter = tasks.filter((t) => t.completed).length;
@@ -30,23 +29,28 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
   const handleAddTask = async (title: string) => {
     const result = await createTask(canvasId, title);
     if (!result.ok) return result.error;
+    
     const { id, completed } = result.data;
     setTasks((prev) => [...prev, { id, title: result.data.title, completed }]);
+    
+    // ✅ ДОБАВЛЕНО: закрываем модальное окно после успешного добавления задачи
+    setIsModalOpen(false); 
   };
 
-  // Исправлен тип события на ChangeEvent
   const handleToggle = async (task: TodoTask, e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation(); // Останавливаем всплытие
+    e.stopPropagation(); 
     const completed = !task.completed;
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed } : t)));
+    
     const result = await setTaskCompleted(task.id, completed);
     if (!result.ok) {
+      // Откат состояния при ошибке
       setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: task.completed } : t)));
     }
   };
 
   const handleDelete = async (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Останавливаем всплытие
+    e.stopPropagation(); 
     const result = await deleteTask(taskId);
     if (result.ok) setTasks((prev) => prev.filter((t) => t.id !== taskId));
   };
@@ -69,10 +73,11 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
           <label className="text-[25px]" style={{ color: '#000000' }}>To do</label>
           <button
             onClick={(e) => {
-              e.stopPropagation(); // Останавливаем всплытие
+              e.stopPropagation(); 
               setIsExpanded(!isExpanded);
             }}
             className="p-3 bg-[#9FCEFF] rounded-full shadow-sm hover:bg-[#7cb2eb] transition-colors"
+            aria-label={isExpanded ? "Свернуть" : "Развернуть"}
           >
             {isExpanded ? <ChevronDown size={20} style={{ color: '#000000' }} /> : <ChevronUp size={20} style={{ color: '#000000' }} />}
           </button>
@@ -82,7 +87,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
           <div className="flex flex-col gap-2">
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Останавливаем всплытие
+                e.stopPropagation(); 
                 setIsModalOpen(true);
               }}
               className="p-2 ml-4 mr-4 mb-2 bg-[#9FCEFF] rounded-[15px] hover:bg-[#7cb2eb] transition-colors"
@@ -102,7 +107,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
                       <input
                         type="checkbox"
                         checked={task.completed}
-                        onChange={(e) => handleToggle(task, e)} // Передаем событие
+                        onChange={(e) => handleToggle(task, e)} 
                         className="peer sr-only"
                       />
                       <div className="h-5 w-5 rounded-[4px] border-2 border-[#6B78E5] bg-[#E6F0FF] peer-checked:bg-[#6B78E5] peer-checked:border-[#6B78E5] transition-colors flex items-center justify-center">
@@ -130,7 +135,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
                     
                     <button
                       aria-label="Удалить задачу"
-                      onClick={(e) => handleDelete(task.id, e)} // Передаем событие
+                      onClick={(e) => handleDelete(task.id, e)} 
                       className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
                     >
                       <X size={18} />
