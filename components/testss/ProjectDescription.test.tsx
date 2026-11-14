@@ -1,6 +1,6 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ProjectDescription from './ProjectDescription';
+import ProjectDescription from '../ProjectDescription';
 
 describe('Компонент ProjectDescription', () => {
   beforeEach(() => {

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import PageHeader from "@/components/page-header";
-import TodoCard from "@/components/todo-card";
+import CanvasLayout from "@/components/canvas/CanvasLayout";
 import { getServerSession } from "@/lib/server/session";
 import { getCanvas } from "@/lib/actions/canvases";
 
@@ -26,11 +25,10 @@ export default async function CanvasPage({ params }: Props) {
   const projectHref = `/project/${canvas.project.id}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-12 px-4">
-      <div className="w-full max-w-[1100px] flex flex-col gap-8">
-        
-        {/* Хлебные крошки */}
-        <nav className="flex items-center gap-2 text-gray-500 text-[16px] font-['Inter'] font-light">
+    <div className="flex h-screen flex-col bg-gray-50">
+      {/* Шапка: крошки + заголовок (фиксированная высота, не скроллится с холстом) */}
+      <div className="flex flex-col gap-3 px-6 pt-4 pb-2 shrink-0 z-10 bg-gray-50">
+        <nav className="flex items-center gap-2 text-gray-500 text-[14px] font-['Inter'] font-light">
           <Link href="/" className="hover:text-main-desaturated transition-colors">
             Мои проекты
           </Link>
@@ -41,38 +39,12 @@ export default async function CanvasPage({ params }: Props) {
           <span>/</span>
           <span className="text-main-desaturated">{canvas.title}</span>
         </nav>
-
-        <PageHeader
-          homeHref={projectHref}
-          title={canvas.title}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
-          <div className="min-h-[500px] bg-white rounded-[20px] border border-main p-8 flex flex-col items-center justify-center text-center">
-            <div className="w-[120px] h-[120px] bg-[#E6F0FF] rounded-full flex items-center justify-center text-main-desaturated mb-6">
-              <LayoutDashboard size={56} strokeWidth={1.5} />
-            </div>
-            <p className="text-main-desaturated text-[26px] font-['Inter'] font-light leading-snug">
-              Холст пока пуст
-            </p>
-            <p className="mt-2 text-gray-500 text-[16px] font-['Inter'] font-light">
-              Скоро здесь можно будет размещать элементы доски
-            </p>
-          </div>
-
-          <div className="bg-white rounded-[20px] border border-main">
-            <TodoCard
-              canvasId={canvas.id}
-              defaultExpanded
-              initialTasks={canvas.tasks.map((t) => ({
-                id: t.id,
-                title: t.title,
-                completed: t.completed,
-              }))}
-            />
-          </div>
-        </div>
+        
+        <PageHeader homeHref={projectHref} title={canvas.title} />
       </div>
+
+      {/* Основная область: делегируем интерактивность клиентскому компоненту */}
+      <CanvasLayout canvas={canvas} projectHref={projectHref} />
     </div>
   );
 }

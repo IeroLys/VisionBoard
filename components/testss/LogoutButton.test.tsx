@@ -1,6 +1,6 @@
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import LogoutButton from './LogoutButton';
+import LogoutButton from '../LogoutButton';
 
 const mockReplace = vi.hoisted(() => vi.fn());
 const mockRefresh = vi.hoisted(() => vi.fn());

@@ -1,6 +1,6 @@
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AddTaskModal from './AddTaskModal'; // Укажите правильный путь к вашему компоненту
+import AddTaskModal from '../AddTaskModal';
 
 describe('Компонент AddTaskModal', () => {
   const mockOnClose = vi.fn();

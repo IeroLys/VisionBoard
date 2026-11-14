@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import MainDashboard from './MainDashboard';
+import MainDashboard from '../MainDashboard';
 import * as projectActions from '@/lib/actions/projects';
 
 type ActionResult<T> =

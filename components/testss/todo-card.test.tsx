@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import TodoCard, { type TodoTask } from './todo-card'; 
+import TodoCard, { type TodoTask } from '../todo-card'; 
 import * as taskActions from '@/lib/actions/tasks';
 
 type ActionResult<T> =

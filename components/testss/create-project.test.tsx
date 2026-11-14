@@ -1,6 +1,6 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CreateBoardModal from './create-project';
+import CreateBoardModal from '../create-project';
 
 describe('Компонент CreateBoardModal', () => {
   const mockOnClose = vi.fn();

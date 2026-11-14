@@ -1,6 +1,6 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ItemMenu from './item-menu';
+import ItemMenu from '../item-menu';
 
 describe('Компонент ItemMenu', () => {
   const mockOnRename = vi.fn();

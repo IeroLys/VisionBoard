@@ -1,6 +1,6 @@
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { DialogShell, ConfirmDialog, RenameDialog } from './dialog';
+import { DialogShell, ConfirmDialog, RenameDialog } from '../dialog';
 
 describe('Компоненты диалоговых окон (dialog.tsx)', () => {
   const mockOnClose = vi.fn();

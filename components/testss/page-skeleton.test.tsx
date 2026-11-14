@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import PageSkeleton from './page-skeleton';
+import PageSkeleton from '../page-skeleton';
 
 describe('Компонент PageSkeleton', () => {
   it('рендерит текст "Загрузка..." для скринридеров', () => {

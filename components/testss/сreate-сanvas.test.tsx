@@ -1,6 +1,6 @@
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CreateCanvasModal from './create-canvas';
+import CreateCanvasModal from '../create-canvas';
 
 describe('Компонент CreateCanvasModal', () => {
   const mockOnClose = vi.fn();
