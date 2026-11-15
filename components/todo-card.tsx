@@ -26,6 +26,10 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
     ? 0
     : (completedCounter / taskCounter) * 100;
 
+  const sortedTasks = [...tasks].sort(
+    (a, b) => Number(a.completed) - Number(b.completed)
+  );
+
   const handleAddTask = async (title: string) => {
     const result = await createTask(canvasId, title);
     if (!result.ok) return result.error;
@@ -37,8 +41,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
     setIsModalOpen(false); 
   };
 
-  const handleToggle = async (task: TodoTask, e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation(); 
+  const handleToggle = async (task: TodoTask) => { 
     const completed = !task.completed;
     setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed } : t)));
     
@@ -49,8 +52,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
     }
   };
 
-  const handleDelete = async (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); 
+  const handleDelete = async (taskId: string) => {
     const result = await deleteTask(taskId);
     if (result.ok) setTasks((prev) => prev.filter((t) => t.id !== taskId));
   };
@@ -68,12 +70,11 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
 
   return (
     <>
-      <div className="rounded-[15px] flex flex-col shadow-sm p-2 bg-white">
+      <div className="rounded-[15px] flex flex-col shadow-sm p-2 bg-white" onClick={(e) => e.stopPropagation()}>
         <div className="p-2 flex justify-between items-center bg-white">
           <label className="text-[25px]" style={{ color: '#000000' }}>To do</label>
           <button
-            onClick={(e) => {
-              e.stopPropagation(); 
+            onClick={() => {
               setIsExpanded(!isExpanded);
             }}
             className="p-3 bg-[#9FCEFF] rounded-full shadow-sm hover:bg-[#7cb2eb] transition-colors"
@@ -86,8 +87,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
         {isExpanded && (
           <div className="flex flex-col gap-2">
             <button
-              onClick={(e) => {
-                e.stopPropagation(); 
+              onClick={() => {
                 setIsModalOpen(true);
               }}
               className="p-2 ml-4 mr-4 mb-2 bg-[#9FCEFF] rounded-[15px] hover:bg-[#7cb2eb] transition-colors"
@@ -98,7 +98,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
 
             {tasks.length > 0 && (
               <ul className="flex flex-col px-4 max-h-[84px] overflow-y-auto scrollbar-hide">
-                {tasks.map((task) => (
+                {sortedTasks.map((task) => (
                   <li 
                     key={task.id} 
                     className="flex items-center gap-3 h-[28px] shrink-0 rounded-md px-2 -mx-2 transition-colors hover:bg-gray-100"
@@ -107,7 +107,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
                       <input
                         type="checkbox"
                         checked={task.completed}
-                        onChange={(e) => handleToggle(task, e)} 
+                        onChange={() => handleToggle(task)} 
                         className="peer sr-only"
                       />
                       <div className="h-5 w-5 rounded-[4px] border-2 border-[#6B78E5] bg-[#E6F0FF] peer-checked:bg-[#6B78E5] peer-checked:border-[#6B78E5] transition-colors flex items-center justify-center">
@@ -135,7 +135,7 @@ export default function TodoCard({ canvasId, initialTasks = [], defaultExpanded 
                     
                     <button
                       aria-label="Удалить задачу"
-                      onClick={(e) => handleDelete(task.id, e)} 
+                      onClick={() => handleDelete(task.id)} 
                       className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
                     >
                       <X size={18} />

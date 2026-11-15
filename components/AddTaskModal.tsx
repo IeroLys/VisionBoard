@@ -58,11 +58,17 @@ export default function AddTaskModal({
       aria-modal="true"
       onMouseDown={(e) => {
         e.stopPropagation(); // Предотвращаем всплытие клика по фону
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          e.stopPropagation();
+          onClose();
+        }
       }}
+      onClick={(e) => e.stopPropagation()}
       className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in duration-150"
     >
-      <div className="w-full max-w-[450px] bg-overcast-sky rounded-[25px] p-10 relative shadow-2xl">
+      <div className="w-full max-w-[450px] bg-overcast-sky rounded-[25px] p-10 relative shadow-2xl"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}>
         
         <button
           type="button"
