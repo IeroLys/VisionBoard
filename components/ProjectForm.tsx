@@ -105,7 +105,7 @@ export default function ProjectForm({
                       key={canvas.id} 
                       // Клик по карточке (включая пустое место) ведет на холст
                       onClick={() => router.push(`/canvas/${canvas.id}`)}
-                      className="flex flex-col gap-2 h-[380px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
+                      className="flex flex-col gap-2 h-[480px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
                     >
                       <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-4 transition-colors hover:bg-[#c2ddf8]">
                         <div className="flex justify-between items-start gap-2 mb-2">
@@ -138,7 +138,7 @@ export default function ProjectForm({
                   ))}
 
                   {!showAll && (
-                    <div className="flex flex-col gap-2 h-[380px] w-full">
+                    <div className="flex flex-col gap-2 h-[480px] w-full">
                       <button
                         onClick={() => setIsModalOpen(true)}
                         className="group flex flex-col items-center justify-center h-full w-full rounded-[15px] bg-overcast-sky transition-colors hover:bg-[#c2ddf8]"
