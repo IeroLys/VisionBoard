@@ -2,7 +2,21 @@
 
 import { useState, useRef, useEffect, type MouseEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, MousePointer2, Pencil, Type, Square, Circle, Search, Check, X } from "lucide-react";
+import { 
+  ArrowLeft, 
+  MousePointer2, 
+  Pencil, 
+  Type, 
+  Image as ImageIcon,
+  Square, 
+  MessageCircle, // <-- Заменили Search на MessageCircle
+  Check, 
+  X, 
+  ChevronsRight, 
+  ChevronsLeft, 
+  Minus, 
+  Plus 
+} from "lucide-react";
 import TodoCard, { type TodoTask } from "@/components/todo-card";
 import { renameCanvas } from "@/lib/actions/canvases";
 
@@ -17,7 +31,7 @@ export default function CanvasEditor({
   initialTasks: TodoTask[]; 
   projectId: string;
 }) {
-  const [isTodoOpen, setIsTodoOpen] = useState(true); // <-- Вернули состояние
+  const [isTodoOpen, setIsTodoOpen] = useState(true);
   const [isDrawing, setIsDrawing] = useState(false);
   
   const [title, setTitle] = useState(initialTitle);
@@ -80,6 +94,10 @@ export default function CanvasEditor({
     }
   };
 
+  const taskCounter = initialTasks.length;
+  const completedCounter = initialTasks.filter((t) => t.completed).length;
+  const completedPercent = taskCounter === 0 ? 0 : (completedCounter / taskCounter) * 100;
+
   return (
     <div className="flex h-screen w-full flex-col bg-gray-50 overflow-hidden relative">
       
@@ -100,19 +118,16 @@ export default function CanvasEditor({
         {/* ПАНЕЛЬ TO DO (справа) */}
         <div 
           className={`
-            absolute right-0 top-0 bottom-0 w-[320px] bg-[#E6F0FF] border-l border-main/20 shadow-2xl transition-transform duration-300 ease-in-out z-20 flex flex-col
+            absolute right-0 top-0 bottom-0 w-[380px] bg-[#E6F0FF] border-l border-main/20 shadow-2xl transition-transform duration-300 ease-in-out z-20 flex flex-col
             ${isTodoOpen ? 'translate-x-0' : 'translate-x-full'}
           `}
         >
-          {/* Кнопка-язычок для сворачивания */}
           <button
             onClick={() => setIsTodoOpen(!isTodoOpen)}
-            className="absolute top-1/2 -left-8 -translate-y-1/2 w-10 h-10 bg-[#9FCEFF] rounded-full flex items-center justify-center shadow-md hover:bg-[#7cb2eb] transition-colors z-30"
+            className="absolute top-1/2 -left-10 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity duration-200 z-30 text-black"
             title={isTodoOpen ? "Скрыть панель" : "Показать панель"}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {isTodoOpen ? <polyline points="9 18 15 12 9 6" /> : <polyline points="15 18 9 12 15 6" />}
-            </svg>
+            {isTodoOpen ? <ChevronsRight size={36} /> : <ChevronsLeft size={36} />}
           </button>
 
           <div className="p-4 border-b border-main/10">
@@ -125,7 +140,7 @@ export default function CanvasEditor({
                     setEditTitleValue(e.target.value);
                     setTitleError("");
                   }}
-                  className="w-full bg-white rounded px-3 py-2 text-[18px] text-black outline-none focus:ring-2 focus:ring-main"
+                  className="w-full bg-white rounded px-3 py-2 text-[16px] text-black outline-none focus:ring-2 focus:ring-main"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleSaveTitle();
@@ -150,17 +165,30 @@ export default function CanvasEditor({
                 className="bg-[#9FCEFF] rounded-[15px] px-4 py-2 text-center cursor-pointer hover:bg-[#7cb2eb] transition-colors"
                 title="Нажмите, чтобы изменить название"
               >
-                <h2 className="text-[24px] font-['Inter'] font-medium text-black truncate">
+                <h2 className="text-[18px] font-['Inter'] font-medium text-black truncate">
                   {title}
                 </h2>
               </div>
             )}
-            {titleError && <p className="text-red-500 text-[14px] mt-1 text-center">{titleError}</p>}
+            {titleError && <p className="text-red-500 text-[12px] mt-1 text-center">{titleError}</p>}
           </div>
 
-          {/* Задачи (всегда открыты, крупный шрифт, без прокрутки) */}
-          <div className="flex-1 overflow-y-auto p-2">
-             <TodoCard canvasId={canvasId} initialTasks={initialTasks} hideToggle={true} isCanvasPage={true} />
+          <div className="flex-1 overflow-y-auto p-4 pb-0">
+             <TodoCard canvasId={canvasId} initialTasks={initialTasks} hideToggle={true} isCanvasPage={true} hideProgress={true} />
+          </div>
+
+          <div className="p-4 border-t border-main/10 shrink-0">
+            <div className="w-full bg-[#9FCEFF] rounded-full h-6 overflow-hidden">
+              {completedCounter > 0 && (
+                <div
+                  className="bg-main h-full rounded-full transition-all duration-300"
+                  style={{ width: `${completedPercent}%` }}
+                />
+              )}
+            </div>
+            <p className="mt-2 text-center text-[16px] text-black">
+              {completedCounter} из {taskCounter}
+            </p>
           </div>
         </div>
       </div>
@@ -169,7 +197,7 @@ export default function CanvasEditor({
       <div 
         className={`
           absolute bottom-6 -translate-x-1/2 w-[600px] bg-[#6B78E5] rounded-[15px] px-8 py-2 flex items-center justify-evenly shadow-lg z-30 transition-all duration-300
-          ${isTodoOpen ? 'left-[calc(50%-160px)]' : 'left-1/2'}
+          ${isTodoOpen ? 'left-[calc(50%-190px)]' : 'left-1/2'}
         `}
       >
         <Link 
@@ -185,9 +213,27 @@ export default function CanvasEditor({
         <button className="p-2 bg-white rounded-md shadow-sm text-black"><MousePointer2 size={20} /></button>
         <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white"><Pencil size={20} /></button>
         <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white"><Type size={20} /></button>
-        <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white"><Square size={20} /></button>
-        <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white"><Circle size={20} /></button>
-        <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white"><Search size={20} /></button>
+        
+        <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white" title="Вставить изображение">
+          <ImageIcon size={20} />
+        </button>
+        
+        <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white" title="Прямоугольник">
+          <Square size={20} />
+        </button>
+
+        {/* Заменили Search на MessageCircle */}
+        <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white" title="Комментарии">
+          <MessageCircle size={20} />
+        </button>
+
+        <div className="w-px h-6 bg-white/30"></div>
+        
+        <div className="flex items-center gap-2 text-white">
+          <Minus size={18} className="opacity-60 hover:opacity-100 cursor-pointer" />
+          <span className="text-[14px] font-['Inter'] select-none">75%</span>
+          <Plus size={18} className="opacity-60 hover:opacity-100 cursor-pointer" />
+        </div>
       </div>
 
     </div>

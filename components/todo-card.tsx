@@ -14,6 +14,7 @@ interface TodoProps {
   defaultExpanded?: boolean;
   hideToggle?: boolean;
   isCanvasPage?: boolean;
+  hideProgress?: boolean; // Новый пропс, чтобы скрыть прогресс внутри карточки
 }
 
 export default function TodoCard({ 
@@ -21,7 +22,8 @@ export default function TodoCard({
   initialTasks = [], 
   defaultExpanded = false,
   hideToggle = false,
-  isCanvasPage = false
+  isCanvasPage = false,
+  hideProgress = false // По умолчанию прогресс показываем
 }: TodoProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [tasks, setTasks] = useState<TodoTask[]>(initialTasks);
@@ -72,7 +74,7 @@ export default function TodoCard({
 
   // Классы для списка задач
   const listClasses = isCanvasPage
-    ? "flex flex-col gap-3 px-2"
+    ? "flex flex-col gap-3 px-2 flex-1 overflow-y-auto" 
     : "flex flex-col gap-1 px-2 max-h-[135px] overflow-y-auto scrollbar-hide";
 
   // Классы для строки задачи
@@ -87,9 +89,9 @@ export default function TodoCard({
 
   return (
     <>
-      <div className={`rounded-[15px] flex flex-col shadow-sm bg-white ${isCanvasPage ? 'p-2' : 'p-4'}`}>
+      <div className={`rounded-[15px] flex flex-col shadow-sm bg-white ${isCanvasPage ? 'p-4 h-full' : 'p-4'}`}>
         {/* Заголовок To do */}
-        <div className={`flex items-center bg-white mb-2 ${hideToggle ? 'justify-center' : 'justify-between'}`}>
+        <div className={`flex items-center bg-white mb-2 shrink-0 ${hideToggle ? 'justify-center' : 'justify-between'}`}>
           <label className={isCanvasPage ? "text-[28px] font-['Inter']" : "text-[28px] font-['Inter']"} style={{ color: '#000000' }}>
             To do
           </label>
@@ -101,77 +103,81 @@ export default function TodoCard({
               }}
               className="p-3 bg-[#9FCEFF] rounded-full shadow-sm hover:bg-[#7cb2eb] transition-colors"
             >
-              {/* Стрелки поменяны местами */}
               {isExpanded ? <ChevronDown size={20} style={{ color: '#000000' }} /> : <ChevronUp size={20} style={{ color: '#000000' }} />}
             </button>
           )}
         </div>
 
         {showTasks && (
-          <div className="flex flex-col gap-3">
+          <>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsModalOpen(true);
               }}
-              className={`p-3 bg-[#9FCEFF] rounded-[15px] hover:bg-[#7cb2eb] transition-colors text-[18px]`}
+              className={`p-3 mb-3 bg-[#9FCEFF] rounded-[15px] hover:bg-[#7cb2eb] transition-colors text-[18px] shrink-0`}
               style={{ color: '#000000' }}
             >
               Добавить задачу
             </button>
 
-            {tasks.length > 0 && (
-              <ul className={listClasses}>
-                {tasks.map((task) => (
-                  <li key={task.id} className={itemClasses}>
-                    <label className="relative flex items-center cursor-pointer shrink-0">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={(e) => handleToggle(task, e)}
-                        className="peer sr-only"
-                      />
-                      <div className="h-6 w-6 rounded-[4px] border-2 border-[#6B78E5] bg-[#E6F0FF] peer-checked:bg-[#6B78E5] peer-checked:border-[#6B78E5] transition-colors flex items-center justify-center">
-                        <svg
-                          className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </div>
-                    </label>
+            <div className={isCanvasPage ? "flex-1 overflow-hidden flex flex-col" : ""}>
+              {tasks.length > 0 && (
+                <ul className={listClasses}>
+                  {tasks.map((task) => (
+                    <li key={task.id} className={itemClasses}>
+                      <label className="relative flex items-center cursor-pointer shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={(e) => handleToggle(task, e)}
+                          className="peer sr-only"
+                        />
+                        <div className="h-6 w-6 rounded-[4px] border-2 border-[#6B78E5] bg-[#E6F0FF] peer-checked:bg-[#6B78E5] peer-checked:border-[#6B78E5] transition-colors flex items-center justify-center">
+                          <svg
+                            className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                      </label>
 
-                    <span 
-                      className={`${textClasses} truncate ${task.completed ? "line-through" : ""}`}
-                      title={task.title}
-                      style={{ color: task.completed ? '#9CA3AF' : '#000000' }}
-                    >
-                      {task.title}
-                    </span>
-                    
-                    <button
-                      aria-label="Удалить задачу"
-                      onClick={(e) => handleDelete(task.id, e)}
-                      className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
-                    >
-                      <X size={20} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                      <span 
+                        className={`${textClasses} truncate ${task.completed ? "line-through" : ""}`}
+                        title={task.title}
+                        style={{ color: task.completed ? '#9CA3AF' : '#000000' }}
+                      >
+                        {task.title}
+                      </span>
+                      
+                      <button
+                        aria-label="Удалить задачу"
+                        onClick={(e) => handleDelete(task.id, e)}
+                        className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                      >
+                        <X size={20} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </>
         )}
 
-        <div className="p-2 text-center mt-4">
-          {progressBar}
-          <p className="mt-2 text-[18px]" style={{ color: '#000000' }}>{completedCounter} из {taskCounter}</p>
-        </div>
+        {/* Прогресс-бар (скрываем, если hideProgress=true) */}
+        {!hideProgress && (
+          <div className={`p-2 text-center ${isCanvasPage ? 'mt-auto shrink-0 pt-3' : 'mt-2'}`}>
+            {progressBar}
+            <p className="mt-2 text-[18px]" style={{ color: '#000000' }}>{completedCounter} из {taskCounter}</p>
+          </div>
+        )}
       </div>
 
       {isModalOpen && typeof document !== "undefined" && createPortal(
