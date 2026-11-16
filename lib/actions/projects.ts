@@ -86,6 +86,37 @@ export async function renameProject(
   return { ok: true, data: updated };
 }
 
+const MAX_DESCRIPTION_LENGTH = 2000;
+
+export async function updateProjectDescription(
+  projectId: string,
+  rawDescription: string,
+): Promise<ActionResult<{ id: string; description: string }>> {
+  const userId = await getUserId();
+  if (!userId) return { ok: false, error: UNAUTHORIZED };
+
+  if (typeof rawDescription !== "string") {
+    return { ok: false, error: "Некорректное описание" };
+  }
+  const description = rawDescription.trim();
+  if (description.length > MAX_DESCRIPTION_LENGTH) {
+    return {
+      ok: false,
+      error: `Описание не должно превышать ${MAX_DESCRIPTION_LENGTH} символов`,
+    };
+  }
+
+  const [updated] = await db
+    .update(project)
+    .set({ description })
+    .where(and(eq(project.id, projectId), eq(project.userId, userId)))
+    .returning({ id: project.id, description: project.description });
+  if (!updated) return { ok: false, error: NOT_FOUND };
+
+  revalidatePath(`/project/${projectId}`);
+  return { ok: true, data: updated };
+}
+
 export async function deleteProject(
   projectId: string,
 ): Promise<ActionResult<{ id: string }>> {

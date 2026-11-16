@@ -21,6 +21,13 @@ vi.mock('@/lib/actions/canvases', () => ({
   deleteCanvas: vi.fn(),
 }));
 
+vi.mock('@/lib/actions/projects', () => ({
+  updateProjectDescription: vi.fn(async (id: string, description: string) => ({
+    ok: true,
+    data: { id, description },
+  })),
+}));
+
 // 4. Мокаем дочерние компоненты со строгой типизацией пропсов
 vi.mock('@/components/create-canvas', () => ({
   default: ({ onCreate, onClose }: { onCreate: (name: string) => void; onClose: () => void }) => (

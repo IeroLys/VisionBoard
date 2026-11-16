@@ -72,8 +72,9 @@ describe('Компонент ProjectDescription', () => {
     expect(screen.getByText('Старое описание')).toBeInTheDocument();
   });
 
-  it('сохраняет новое описание и вызывает console.log', () => {
-    render(<ProjectDescription initialDescription="Старое описание" />);
+  it('сохраняет новое описание и вызывает onSave', () => {
+    const onSave = vi.fn(async () => undefined);
+    render(<ProjectDescription initialDescription="Старое описание" onSave={onSave} />);
     
     fireEvent.click(screen.getByText('Описание'));
     fireEvent.click(screen.getByLabelText('Редактировать описание'));
@@ -88,8 +89,21 @@ describe('Компонент ProjectDescription', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByText('Совершенно новое описание')).toBeInTheDocument();
     
-    // Проверяем, что заглушка API была вызвана с правильными данными
-    expect(console.log).toHaveBeenCalledWith('Сохранено описание:', 'Совершенно новое описание');
+    // Проверяем, что сохранение вызвано с правильными данными
+    expect(onSave).toHaveBeenCalledWith('Совершенно новое описание');
+  });
+
+  it('откатывает описание и показывает ошибку, если сохранение не удалось', async () => {
+    const onSave = vi.fn(async () => 'Ошибка сохранения');
+    render(<ProjectDescription initialDescription="Старое описание" onSave={onSave} />);
+
+    fireEvent.click(screen.getByText('Описание'));
+    fireEvent.click(screen.getByLabelText('Редактировать описание'));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Новое' } });
+    fireEvent.click(screen.getByText('Сохранить'));
+
+    expect(await screen.findByText('Ошибка сохранения')).toBeInTheDocument();
+    expect(screen.getByText('Старое описание')).toBeInTheDocument();
   });
 
   it('не показывает кнопку редактирования, когда панель свернута', () => {

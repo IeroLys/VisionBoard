@@ -3,21 +3,43 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, Check, X } from "lucide-react";
 
-export default function ProjectDescription({ 
-  initialDescription = "" 
-}: { 
-  initialDescription?: string 
+export default function ProjectDescription({
+  initialDescription = "",
+  onSave,
+}: {
+  initialDescription?: string
+  /** Persists the description. Return an error message to roll back. */
+  onSave?: (description: string) => Promise<string | void>
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [description, setDescription] = useState(initialDescription);
   const [isEditing, setIsEditing] = useState(false);
   const [tempDescription, setTempDescription] = useState(initialDescription);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSave = () => {
-    setDescription(tempDescription);
+  const handleSave = async () => {
+    const previous = description;
+    const next = tempDescription.trim();
+    // Optimistic update: show the new text right away, roll back on error.
+    setDescription(next);
     setIsEditing(false);
-    // Здесь в будущем будет вызов API для сохранения в БД
-    console.log("Сохранено описание:", tempDescription);
+    setError("");
+    if (!onSave) return;
+
+    setIsSaving(true);
+    try {
+      const err = await onSave(next);
+      if (err) {
+        setDescription(previous);
+        setError(err);
+      }
+    } catch {
+      setDescription(previous);
+      setError("Не удалось сохранить описание. Попробуйте ещё раз");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -36,6 +58,7 @@ export default function ProjectDescription({
           {/* Кнопка редактирования (только когда панель открыта и не в режиме редактирования) */}
           {isOpen && !isEditing && (
             <button
+              disabled={isSaving}
               onClick={() => {
                 setTempDescription(description);
                 setIsEditing(true);
@@ -67,6 +90,8 @@ export default function ProjectDescription({
               <textarea
                 value={tempDescription}
                 onChange={(e) => setTempDescription(e.target.value)}
+                maxLength={2000}
+                autoFocus
                 className="w-full min-h-[100px] p-3 bg-gray-50 rounded-[10px] text-black focus:outline-none focus:ring-2 focus:ring-main resize-none font-['Inter'] text-[20px]"
                 placeholder="Введите описание проекта..."
               />
@@ -90,6 +115,11 @@ export default function ProjectDescription({
             </div>
           ) : (
             <div className="flex flex-col gap-2">
+             {error && (
+                <p role="alert" className="text-red-500 font-['Inter'] text-[16px] pt-2">
+                  {error}
+                </p>
+              )}
              {description ? (
                 <p className="text-black font-['Inter'] text-[18px] whitespace-pre-wrap pt-2">
                   {description}

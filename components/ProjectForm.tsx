@@ -8,6 +8,7 @@ import TodoCard, { type TodoTask } from "@/components/todo-card"
 import ItemMenu from "@/components/item-menu"
 import PageHeader from "@/components/page-header"
 import ProjectDescription from "@/components/ProjectDescription"
+import { updateProjectDescription } from "@/lib/actions/projects"
 import {
   createCanvas,
   deleteCanvas,
@@ -19,10 +20,12 @@ type Canvas = { id: string; title: string; tasks: TodoTask[] }
 export default function ProjectForm({
   id,
   title,
+  description = "",
   initialCanvases = [],
 }: {
   id: string
   title?: string
+  description?: string
   initialCanvases?: Canvas[]
 }) {
   const router = useRouter()
@@ -63,7 +66,13 @@ export default function ProjectForm({
       <div className="flex w-full max-w-[1100px] flex-col gap-6">
         
         <PageHeader homeHref="/" title={title ?? "Проект"} />
-        <ProjectDescription />
+        <ProjectDescription
+          initialDescription={description}
+          onSave={async (value) => {
+            const result = await updateProjectDescription(id, value)
+            if (!result.ok) return result.error
+          }}
+        />
 
         <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-8">
           {canvs.length === 0 ? (
