@@ -24,6 +24,7 @@ export default async function ProjectPage({ params }: Props) {
     <ProjectForm
       id={project.id}
       title={project.title}
+      description={project.description}
       initialCanvases={project.canvases.map((c) => ({
         id: c.id,
         title: c.title,
