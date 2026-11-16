@@ -32,9 +32,7 @@ export default function TodoCard({
   const taskCounter = tasks.length;
   const completedCounter = tasks.filter((t) => t.completed).length;
 
-  const completedPercent = taskCounter === 0
-    ? 0
-    : (completedCounter / taskCounter) * 100;
+  const completedPercent = taskCounter === 0 ? 0 : (completedCounter / taskCounter) * 100;
 
   const handleAddTask = async (title: string) => {
     const result = await createTask(canvasId, title);
@@ -60,6 +58,7 @@ export default function TodoCard({
   };
 
   const progressBar = (
+    // Оригинальные h-6 и h-8 сохранены
     <div className={`w-full bg-[#9FCEFF] rounded-full overflow-hidden ${isCanvasPage ? 'h-6' : 'h-8'}`}>
       {completedCounter > 0 && (
         <div
@@ -70,27 +69,29 @@ export default function TodoCard({
     </div>
   );
 
-  // Классы для списка задач
+  // Добавлен w-full для надежности, оригинальные gap и max-h сохранены
   const listClasses = isCanvasPage
-    ? "flex flex-col gap-3 px-2"
-    : "flex flex-col gap-1 px-2 max-h-[135px] overflow-y-auto scrollbar-hide";
+    ? "flex flex-col gap-3 px-2 w-full"
+    : "flex flex-col gap-1 px-2 max-h-[135px] overflow-y-auto scrollbar-hide w-full";
 
-  // Классы для строки задачи
+  // min-h гарантирует удобство нажатия на мобильном, md:h строго возвращает оригинальный размер на десктопе
   const itemClasses = isCanvasPage
-    ? "flex items-center gap-3 h-[48px] shrink-0 rounded-md px-2 transition-colors hover:bg-gray-100"
-    : "flex items-center gap-3 h-[40px] shrink-0 rounded-md px-2 transition-colors hover:bg-gray-100";
+    ? "flex items-center gap-3 min-h-[48px] md:h-[48px] shrink-0 rounded-md px-2 transition-colors hover:bg-gray-100"
+    : "flex items-center gap-3 min-h-[44px] md:h-[40px] shrink-0 rounded-md px-2 transition-colors hover:bg-gray-100";
 
-  // Классы для текста задачи
+  // На десктопе (md) строго оригинальные 20px и 18px. На мобильном чуть компактнее, чтобы избежать переносов
   const textClasses = isCanvasPage
-    ? "flex-1 text-[20px] font-['Inter']"
-    : "flex-1 text-[18px]";
+    ? "flex-1 text-[18px] md:text-[20px] font-['Inter'] leading-tight"
+    : "flex-1 text-[16px] md:text-[18px] leading-tight";
 
   return (
     <>
+      {/* Оригинальные rounded-[15px] и паддинги сохранены */}
       <div className={`rounded-[15px] flex flex-col shadow-sm bg-white ${isCanvasPage ? 'p-2' : 'p-4'}`}>
+        
         {/* Заголовок To do */}
         <div className={`flex items-center bg-white mb-2 ${hideToggle ? 'justify-center' : 'justify-between'}`}>
-          <label className={isCanvasPage ? "text-[28px] font-['Inter']" : "text-[28px] font-['Inter']"} style={{ color: '#000000' }}>
+          <label className={isCanvasPage ? "text-[24px] md:text-[28px] font-['Inter']" : "text-[24px] md:text-[28px] font-['Inter']"} style={{ color: '#000000' }}>
             To do
           </label>
           {!hideToggle && (
@@ -99,9 +100,9 @@ export default function TodoCard({
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
               }}
-              className="p-3 bg-[#9FCEFF] rounded-full shadow-sm hover:bg-[#7cb2eb] transition-colors"
+              className="p-3 bg-[#9FCEFF] rounded-full shadow-sm hover:bg-[#7cb2eb] transition-colors active:scale-95"
+              style={{ color: '#000000' }}
             >
-              {/* Стрелки поменяны местами */}
               {isExpanded ? <ChevronDown size={20} style={{ color: '#000000' }} /> : <ChevronUp size={20} style={{ color: '#000000' }} />}
             </button>
           )}
@@ -114,7 +115,8 @@ export default function TodoCard({
                 e.stopPropagation();
                 setIsModalOpen(true);
               }}
-              className={`p-3 bg-[#9FCEFF] rounded-[15px] hover:bg-[#7cb2eb] transition-colors text-[18px]`}
+              // Добавлен w-full и адаптивный текст, оригинальный rounded-[15px] сохранен
+              className="w-full p-3 bg-[#9FCEFF] rounded-[15px] hover:bg-[#7cb2eb] transition-colors text-[16px] md:text-[18px] active:scale-[0.98]"
               style={{ color: '#000000' }}
             >
               Добавить задачу
@@ -131,6 +133,7 @@ export default function TodoCard({
                         onChange={(e) => handleToggle(task, e)}
                         className="peer sr-only"
                       />
+                      {/* Оригинальные h-6 w-6 и rounded-[4px] сохранены */}
                       <div className="h-6 w-6 rounded-[4px] border-2 border-[#6B78E5] bg-[#E6F0FF] peer-checked:bg-[#6B78E5] peer-checked:border-[#6B78E5] transition-colors flex items-center justify-center">
                         <svg
                           className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
@@ -157,7 +160,8 @@ export default function TodoCard({
                     <button
                       aria-label="Удалить задачу"
                       onClick={(e) => handleDelete(task.id, e)}
-                      className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                      // Добавлен p-1.5 и rounded-md, чтобы увеличить зону клика для пальца, не меняя визуальный размер иконки 20px
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0 active:scale-95"
                     >
                       <X size={20} />
                     </button>

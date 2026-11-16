@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import CreateCanvasModal from "@/components/create-canvas"
 import { Plus, ChevronDown, ChevronUp } from "lucide-react"
-import Link from "next/link"
 import TodoCard, { type TodoTask } from "@/components/todo-card"
 import ItemMenu from "@/components/item-menu"
 import PageHeader from "@/components/page-header"
@@ -56,27 +55,27 @@ export default function ProjectForm({
   }
 
   const visibleCanvs = showAll ? canvs : canvs.slice(0, 2);
-
   const showViewAllButton = canvs.length >= 3 && !showAll;
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
+    // min-h-dvh для корректной работы на мобильных браузерах
+    <div className="flex min-h-dvh flex-col items-center bg-gray-50 px-4 py-8 md:py-12">
       <div className="flex w-full max-w-[1100px] flex-col gap-6">
         
         <PageHeader homeHref="/" title={title ?? "Проект"} />
         <ProjectDescription />
 
-        <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-8">
+        <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-4 md:p-8">
           {canvs.length === 0 ? (
             <div className="flex flex-col items-center justify-center">
-              <p className="mb-6 text-center font-['Inter'] text-[26px] leading-snug font-light text-main-desaturated">
+              <p className="mb-6 text-center font-['Inter'] text-[22px] md:text-[26px] leading-snug font-light text-main-desaturated">
                 У вас пока нет холстов,
                 <br />
                 создать?
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="group flex h-[140px] w-[140px] items-center justify-center rounded-full bg-[#E6F0FF] text-main-desaturated transition-colors hover:bg-[#d4e5fc]"
+                className="group flex h-[120px] w-[120px] md:h-[140px] md:w-[140px] items-center justify-center rounded-full bg-[#E6F0FF] text-main-desaturated transition-colors hover:bg-[#d4e5fc]"
               >
                 <Plus size={80} strokeWidth={1.5} className="transition-transform group-hover:scale-110" />
               </button>
@@ -87,7 +86,7 @@ export default function ProjectForm({
               <div 
                 className={
                   showAll 
-                    ? "w-full max-h-[500px] overflow-y-auto pr-2" 
+                    ? "w-full max-h-[60vh] md:max-h-[500px] overflow-y-auto pr-2" 
                     : "w-full"
                 }
               >
@@ -96,11 +95,12 @@ export default function ProjectForm({
                     <div 
                       key={canvas.id} 
                       onClick={() => router.push(`/canvas/${canvas.id}`)}
-                      className="flex flex-col gap-2 h-[480px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer" // <-- Высота увеличена до 480px
+                      // min-h-[400px] на мобильном, строго h-[480px] на десктопе
+                      className="flex flex-col gap-2 h-auto min-h-[400px] md:h-[480px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
                     >
                       <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-4 transition-colors hover:bg-[#c2ddf8]">
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[26px] font-light text-black">
+                          <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[22px] md:text-[26px] font-light text-black">
                             {canvas.title}
                           </span>
                           <div onClick={(e) => e.stopPropagation()}>
@@ -125,7 +125,8 @@ export default function ProjectForm({
                   ))}
 
                   {!showAll && (
-                    <div className="flex flex-col gap-2 h-[480px] w-full"> {/* <-- Кнопка тоже 480px */}
+                    // Высота кнопки совпадает с высотой карточек холста для ровной сетки
+                    <div className="flex flex-col gap-2 h-auto min-h-[400px] md:h-[480px] w-full">
                       <button
                         onClick={() => setIsModalOpen(true)}
                         className="group flex flex-col items-center justify-center h-full w-full rounded-[15px] bg-overcast-sky transition-colors hover:bg-[#c2ddf8]"

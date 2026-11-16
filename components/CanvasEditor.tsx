@@ -17,7 +17,7 @@ export default function CanvasEditor({
   initialTasks: TodoTask[]; 
   projectId: string;
 }) {
-  const [isTodoOpen, setIsTodoOpen] = useState(true); // <-- Вернули состояние
+  const [isTodoOpen, setIsTodoOpen] = useState(true);
   const [isDrawing, setIsDrawing] = useState(false);
   
   const [title, setTitle] = useState(initialTitle);
@@ -81,7 +81,8 @@ export default function CanvasEditor({
   };
 
   return (
-    <div className="flex h-screen w-full flex-col bg-gray-50 overflow-hidden relative">
+    // h-dvh вместо h-screen для корректной работы с адресной строкой мобильных браузеров
+    <div className="flex h-dvh w-full flex-col bg-gray-50 overflow-hidden relative">
       
       <div className="flex flex-1 relative overflow-hidden">
         
@@ -89,7 +90,8 @@ export default function CanvasEditor({
         <div className="flex-1 bg-white relative overflow-hidden cursor-crosshair">
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
+            // touch-none критически важен: запрещает скролл страницы при рисовании пальцем на телефоне
+            className="absolute inset-0 w-full h-full touch-none"
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
@@ -100,14 +102,18 @@ export default function CanvasEditor({
         {/* ПАНЕЛЬ TO DO (справа) */}
         <div 
           className={`
-            absolute right-0 top-0 bottom-0 w-[320px] bg-[#E6F0FF] border-l border-main/20 shadow-2xl transition-transform duration-300 ease-in-out z-20 flex flex-col
+            absolute right-0 top-0 bottom-0 
+            w-[85vw] max-w-[320px] md:w-[320px] 
+            bg-[#E6F0FF] border-l border-main/20 shadow-2xl 
+            transition-transform duration-300 ease-in-out z-20 flex flex-col
             ${isTodoOpen ? 'translate-x-0' : 'translate-x-full'}
           `}
         >
           {/* Кнопка-язычок для сворачивания */}
           <button
             onClick={() => setIsTodoOpen(!isTodoOpen)}
-            className="absolute top-1/2 -left-8 -translate-y-1/2 w-10 h-10 bg-[#9FCEFF] rounded-full flex items-center justify-center shadow-md hover:bg-[#7cb2eb] transition-colors z-30"
+            // На десктопе (md) строго -left-8, на мобильном -left-4, чтобы не вылезать за экран на узких устройствах
+            className="absolute top-1/2 -left-4 md:-left-8 -translate-y-1/2 w-10 h-10 bg-[#9FCEFF] rounded-full flex items-center justify-center shadow-md hover:bg-[#7cb2eb] transition-colors z-30"
             title={isTodoOpen ? "Скрыть панель" : "Показать панель"}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -158,7 +164,7 @@ export default function CanvasEditor({
             {titleError && <p className="text-red-500 text-[14px] mt-1 text-center">{titleError}</p>}
           </div>
 
-          {/* Задачи (всегда открыты, крупный шрифт, без прокрутки) */}
+          {/* Задачи */}
           <div className="flex-1 overflow-y-auto p-2">
              <TodoCard canvasId={canvasId} initialTasks={initialTasks} hideToggle={true} isCanvasPage={true} />
           </div>
@@ -168,8 +174,13 @@ export default function CanvasEditor({
       {/* НИЖНЯЯ ПАНЕЛЬ */}
       <div 
         className={`
-          absolute bottom-6 -translate-x-1/2 w-[600px] bg-[#6B78E5] rounded-[15px] px-8 py-2 flex items-center justify-evenly shadow-lg z-30 transition-all duration-300
-          ${isTodoOpen ? 'left-[calc(50%-160px)]' : 'left-1/2'}
+          absolute bottom-6 -translate-x-1/2 
+          w-[95vw] max-w-[600px] md:w-[600px] 
+          bg-[#6B78E5] rounded-[15px] 
+          px-2 md:px-8 py-2 
+          flex items-center justify-evenly shadow-lg z-30 transition-all duration-300
+          /* На мобильном всегда по центру (left-1/2). На десктопе (md) работает твой исходный сдвиг */
+          ${isTodoOpen ? 'md:left-[calc(50%-160px)]' : 'left-1/2'}
         `}
       >
         <Link 
