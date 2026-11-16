@@ -4,11 +4,11 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import CreateCanvasModal from "@/components/create-canvas"
 import { Plus, ChevronDown, ChevronUp } from "lucide-react"
+import Link from "next/link"
 import TodoCard, { type TodoTask } from "@/components/todo-card"
 import ItemMenu from "@/components/item-menu"
 import PageHeader from "@/components/page-header"
 import ProjectDescription from "@/components/ProjectDescription"
-import { updateProjectDescription } from "@/lib/actions/projects"
 import {
   createCanvas,
   deleteCanvas,
@@ -20,12 +20,10 @@ type Canvas = { id: string; title: string; tasks: TodoTask[] }
 export default function ProjectForm({
   id,
   title,
-  description = "",
   initialCanvases = [],
 }: {
   id: string
   title?: string
-  description?: string
   initialCanvases?: Canvas[]
 }) {
   const router = useRouter()
@@ -66,13 +64,7 @@ export default function ProjectForm({
       <div className="flex w-full max-w-[1100px] flex-col gap-6">
         
         <PageHeader homeHref="/" title={title ?? "Проект"} />
-        <ProjectDescription
-          initialDescription={description}
-          onSave={async (value) => {
-            const result = await updateProjectDescription(id, value)
-            if (!result.ok) return result.error
-          }}
-        />
+        <ProjectDescription />
 
         <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-8">
           {canvs.length === 0 ? (
@@ -103,17 +95,14 @@ export default function ProjectForm({
                   {visibleCanvs.map((canvas) => (
                     <div 
                       key={canvas.id} 
-                      // Клик по карточке (включая пустое место) ведет на холст
                       onClick={() => router.push(`/canvas/${canvas.id}`)}
-                      className="flex flex-col gap-2 h-[380px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
+                      className="flex flex-col gap-2 h-[480px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer" // <-- Высота увеличена до 480px
                     >
                       <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-4 transition-colors hover:bg-[#c2ddf8]">
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          {/* Название (без ссылки, так как клик уже на карточке) */}
                           <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[26px] font-light text-black">
                             {canvas.title}
                           </span>
-                          {/* Меню: останавливаем всплытие, чтобы не было перехода */}
                           <div onClick={(e) => e.stopPropagation()}>
                             <ItemMenu
                               itemTitle={canvas.title}
@@ -128,8 +117,6 @@ export default function ProjectForm({
                             />
                           </div>
                         </div>
-                        {/* TodoCard: убрали stopPropagation, чтобы клик по пустому месту вел на холст.
-                            Внутри TodoCard интерактивные элементы сами останавливают всплытие. */}
                         <div className="mt-auto flex-1 min-h-0 overflow-hidden flex flex-col justify-end">
                           <TodoCard canvasId={canvas.id} initialTasks={canvas.tasks} />
                         </div>
@@ -138,7 +125,7 @@ export default function ProjectForm({
                   ))}
 
                   {!showAll && (
-                    <div className="flex flex-col gap-2 h-[380px] w-full">
+                    <div className="flex flex-col gap-2 h-[480px] w-full"> {/* <-- Кнопка тоже 480px */}
                       <button
                         onClick={() => setIsModalOpen(true)}
                         className="group flex flex-col items-center justify-center h-full w-full rounded-[15px] bg-overcast-sky transition-colors hover:bg-[#c2ddf8]"
