@@ -13,24 +13,22 @@ export default function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="w-full bg-overcast-sky rounded-[20px] p-6 md:p-8 flex items-center justify-between gap-4 min-h-[160px]">
+    <div className="w-full bg-overcast-sky rounded-[20px] p-4 sm:p-5 md:p-6 lg:p-7 xl:p-8 flex items-center justify-between gap-3 md:gap-4 min-h-[90px] sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] xl:min-h-[150px] 2xl:min-h-[160px]">
       
-      <div className="flex flex-col gap-3 min-w-0">
-        <h1 className="text-[30px] md:text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight truncate">
+      <div className="flex flex-col gap-1.5 md:gap-2 lg:gap-3 min-w-0">
+        <h1 className="text-[22px] sm:text-[26px] md:text-[28px] lg:text-[30px] xl:text-[32px] 2xl:text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight truncate">
           {title}
         </h1>
         
-        {/* ИСПРАВЛЕНО: Добавлен рендеринг subtitle */}
         {subtitle && (
-          <div className="text-gray-600 text-[16px] font-['Inter'] font-light leading-snug">
+          <div className="text-gray-600 text-[14px] md:text-[15px] lg:text-[16px] font-['Inter'] font-light leading-snug">
             {subtitle}
           </div>
         )}
       </div>
 
       {/* Правая часть: Иконки и действия */}
-      <div className="flex items-center gap-3 shrink-0">
-        {/* Если переданы кастомные actions, рендерим их, иначе стандартные иконки */}
+      <div className="flex items-center gap-2 md:gap-3 shrink-0">
         {actions ? (
           actions
         ) : (
@@ -39,9 +37,9 @@ export default function PageHeader({
             <button
               aria-label="Участники"
               title="Участники"
-              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
+              className="bg-white p-2 md:p-2.5 lg:p-3 rounded-[12px] md:rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
             >
-              <Users size={38} />
+              <Users size={38} className="size-5 md:size-6 lg:size-7 xl:size-8 2xl:size-[38px]" />
             </button>
 
             {/* Иконка Домой */}
@@ -49,9 +47,9 @@ export default function PageHeader({
               href={homeHref}
               aria-label="На главную"
               title="На главную"
-              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
+              className="bg-white p-2 md:p-2.5 lg:p-3 rounded-[12px] md:rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-main"
             >
-              <Home size={38} />
+              <Home size={38} className="size-5 md:size-6 lg:size-7 xl:size-8 2xl:size-[38px]" />
             </Link>
           </>
         )}

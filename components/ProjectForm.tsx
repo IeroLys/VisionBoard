@@ -58,49 +58,43 @@ export default function ProjectForm({
   const showViewAllButton = canvs.length >= 3 && !showAll;
 
   return (
-    // min-h-dvh для корректной работы на мобильных браузерах
-    <div className="flex min-h-dvh flex-col items-center bg-gray-50 px-4 py-8 md:py-12">
-      <div className="flex w-full max-w-[1100px] flex-col gap-6">
+    <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-4 sm:py-6 md:py-8 lg:py-10 xl:py-12">
+      <div className="flex w-full max-w-[1100px] flex-col gap-3 sm:gap-4 md:gap-5 lg:gap-6">
         
         <PageHeader homeHref="/" title={title ?? "Проект"} />
         <ProjectDescription />
 
-        <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-4 md:p-8">
+        {/* Белая карточка: адаптивные паддинги, убран min-h-[500px] */}
+        <div className="flex w-full flex-col justify-center rounded-[16px] md:rounded-[20px] border border-main bg-white p-3 sm:p-4 md:p-6 lg:p-7 xl:p-8">
           {canvs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center">
-              <p className="mb-6 text-center font-['Inter'] text-[22px] md:text-[26px] leading-snug font-light text-main-desaturated">
+            <div className="flex flex-col items-center justify-center py-6 md:py-10">
+              <p className="mb-4 md:mb-6 text-center font-['Inter'] text-[20px] md:text-[24px] lg:text-[26px] leading-snug font-light text-main-desaturated">
                 У вас пока нет холстов,
                 <br />
                 создать?
               </p>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="group flex h-[120px] w-[120px] md:h-[140px] md:w-[140px] items-center justify-center rounded-full bg-[#E6F0FF] text-main-desaturated transition-colors hover:bg-[#d4e5fc]"
+                className="group flex h-[100px] w-[100px] md:h-[120px] md:w-[120px] lg:h-[130px] lg:w-[130px] xl:h-[140px] xl:w-[140px] items-center justify-center rounded-full bg-[#E6F0FF] text-main-desaturated transition-colors hover:bg-[#d4e5fc]"
               >
-                <Plus size={80} strokeWidth={1.5} className="transition-transform group-hover:scale-110" />
+                <Plus size={80} className="size-12 md:size-14 lg:size-16 xl:size-[80px]" strokeWidth={1.5} />
               </button>
             </div>
           ) : (
-            <div className="flex w-full flex-col gap-4">
+            <div className="flex w-full flex-col gap-3 md:gap-4">
               
-              <div 
-                className={
-                  showAll 
-                    ? "w-full max-h-[60vh] md:max-h-[500px] overflow-y-auto pr-2" 
-                    : "w-full"
-                }
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
                   {visibleCanvs.map((canvas) => (
                     <div 
                       key={canvas.id} 
                       onClick={() => router.push(`/canvas/${canvas.id}`)}
-                      // min-h-[400px] на мобильном, строго h-[480px] на десктопе
-                      className="flex flex-col gap-2 h-auto min-h-[400px] md:h-[480px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
+                      // Адаптивная высота холстов: на 2xl возвращается оригинальные 480px
+                      className="flex flex-col gap-2 h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px] xl:h-[440px] 2xl:h-[480px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
                     >
-                      <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-4 transition-colors hover:bg-[#c2ddf8]">
+                      <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-3 md:p-4 transition-colors hover:bg-[#c2ddf8]">
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[22px] md:text-[26px] font-light text-black">
+                          <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[20px] md:text-[22px] lg:text-[24px] xl:text-[26px] font-light text-black">
                             {canvas.title}
                           </span>
                           <div onClick={(e) => e.stopPropagation()}>
@@ -125,14 +119,13 @@ export default function ProjectForm({
                   ))}
 
                   {!showAll && (
-                    // Высота кнопки совпадает с высотой карточек холста для ровной сетки
-                    <div className="flex flex-col gap-2 h-auto min-h-[400px] md:h-[480px] w-full">
+                    <div className="flex flex-col gap-2 h-[280px] sm:h-[320px] md:h-[360px] lg:h-[400px] xl:h-[440px] 2xl:h-[480px] w-full">
                       <button
                         onClick={() => setIsModalOpen(true)}
                         className="group flex flex-col items-center justify-center h-full w-full rounded-[15px] bg-overcast-sky transition-colors hover:bg-[#c2ddf8]"
                       >
-                        <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-white shadow-sm transition-transform group-hover:scale-105">
-                          <Plus size={40} className="text-main-desaturated" strokeWidth={2} />
+                        <div className="flex h-[50px] w-[50px] md:h-[60px] md:w-[60px] lg:h-[65px] lg:w-[65px] xl:h-[70px] xl:w-[70px] items-center justify-center rounded-full bg-white shadow-sm transition-transform group-hover:scale-105">
+                          <Plus size={40} className="size-6 md:size-7 lg:size-8 xl:size-10" strokeWidth={2} />
                         </div>
                       </button>
                     </div>
@@ -144,28 +137,28 @@ export default function ProjectForm({
                 <div className="w-full flex flex-col gap-3">
                   <button
                     onClick={() => setShowAll(true)}
-                    className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-overcast-sky py-3 font-['Inter'] text-[16px] font-normal text-main-desaturated transition-colors hover:bg-[#c2ddf8]"
+                    className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-overcast-sky py-2.5 md:py-3 font-['Inter'] text-[14px] md:text-[15px] lg:text-[16px] font-normal text-main-desaturated transition-colors hover:bg-[#c2ddf8]"
                   >
                     Посмотреть все холсты ({canvs.length})
-                    <ChevronDown size={20} />
+                    <ChevronDown size={20} className="size-4 md:size-5" />
                   </button>
                 </div>
               )}
 
               {showAll && (
-                <div className="w-full flex flex-col gap-3 mt-4">
+                <div className="w-full flex flex-col gap-3 mt-2 md:mt-4">
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full rounded-[10px] bg-[#6B78E5] py-3 text-[18px] font-normal text-white transition-colors duration-200 hover:bg-[#5A67D8]"
+                    className="w-full rounded-[10px] bg-[#6B78E5] py-2.5 md:py-3 text-[16px] md:text-[17px] lg:text-[18px] font-normal text-white transition-colors duration-200 hover:bg-[#5A67D8]"
                   >
                     Создать холст
                   </button>
                   <button
                     onClick={() => setShowAll(false)}
-                    className="flex w-full items-center justify-center gap-2 rounded-[10px] py-2 font-['Inter'] text-[16px] font-normal text-gray-500 transition-colors hover:text-main-desaturated"
+                    className="flex w-full items-center justify-center gap-2 rounded-[10px] py-2 font-['Inter'] text-[14px] md:text-[15px] lg:text-[16px] font-normal text-gray-500 transition-colors hover:text-main-desaturated"
                   >
                     Скрыть
-                    <ChevronUp size={20} />
+                    <ChevronUp size={20} className="size-4 md:size-5" />
                   </button>
                 </div>
               )}
