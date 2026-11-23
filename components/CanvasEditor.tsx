@@ -9,7 +9,7 @@ import {
   Type, 
   Image as ImageIcon,
   Square, 
-  MessageCircle, // <-- Заменили Search на MessageCircle
+  MessageCircle, 
   Check, 
   X, 
   ChevronsRight, 
@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import TodoCard, { type TodoTask } from "@/components/todo-card";
 import { renameCanvas } from "@/lib/actions/canvases";
+import ObjectWrapper from "@/components/canvasObjectTypes/ObjectWrapper";
+import type { CanvasObject } from "@/components/canvasObjectTypes/types";
 
 export default function CanvasEditor({ 
   canvasId, 
@@ -42,6 +44,83 @@ export default function CanvasEditor({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
 
+  const MIN_PERCENT = 20;
+  const MAX_PERCENT = 150;
+  const PERCENT_STEP = 10;
+  const [percent, setPercent] = useState(100);
+  const zoom = 100 / percent;
+
+  const [isZoomAnimating, setIsZoomAnimating] = useState(false);
+
+  const zoomIn  = () => animate(() => setPercent((percent) => Math.max(MIN_PERCENT, percent - PERCENT_STEP)));
+  const zoomOut = () => animate(() => setPercent((percent) => Math.min(MAX_PERCENT, percent + PERCENT_STEP)));
+  const animate = (fn: () => void) => {
+    setIsZoomAnimating(true);
+    fn();
+    window.setTimeout(() => setIsZoomAnimating(false), 220);
+  };
+
+  type Tool = "hand" | "pen";
+  const [activeTool, setActiveTool] = useState<Tool>("hand");
+
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+
+  const handlePanStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    setSelectedId(null); 
+    const isLeftHand = e.button === 0 && activeTool === "hand";
+    const isMiddle = e.button === 1;
+    if (!isLeftHand && !isMiddle) return;
+
+    e.preventDefault();
+    setIsPanning(true);
+    panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+  };
+
+  const handlePanMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPanning) return;
+    const dx = e.clientX - panStart.current.x;
+    const dy = e.clientY - panStart.current.y;
+    setPan({
+      x: panStart.current.panX + dx,
+      y: panStart.current.panY + dy,
+    });
+  };
+
+  const handlePanEnd = () => {
+    setIsPanning(false);
+  };
+
+  const handleDeleteObject = (id: string) => {
+    setObjects((prev) => prev.filter((o) => o.id !== id));
+    setSelectedId(null);
+  };
+
+  {/* Здесь хранятся все объекты
+      По умолчанию создаются два тестовых: круг и прямоугольник
+      !!! ИХ НАДО БУДЕТ УДАЛИТЬ !!! 
+      Они просто для демонстрации выделения и удаления по крестику*/}
+  const [objects, setObjects] = useState<CanvasObject[]>([
+  {
+    id: "circle-1",
+    type: "testCircle",
+    x: 200,
+    y: 200,
+    width: 120,
+    height: 120,
+  },
+  {
+    id: "rect-1",
+    type: "testRectangle",
+    x: 400,
+    y: 300,
+    width: 150,
+    height: 100,
+  },
+  ]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   useEffect(() => {
     if (canvasRef.current) {
       const context = canvasRef.current.getContext("2d");
@@ -56,6 +135,8 @@ export default function CanvasEditor({
   }, []);
 
   const startDrawing = (e: MouseEvent<HTMLCanvasElement>) => {
+    if (activeTool !== "pen") return;
+    setIsZoomAnimating(false);
     if (!ctx) return;
     ctx.beginPath();
     ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
@@ -63,7 +144,7 @@ export default function CanvasEditor({
   };
 
   const draw = (e: MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !ctx) return;
+    if (activeTool !== "pen" || !isDrawing || !ctx) return;
     ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
     ctx.stroke();
   };
@@ -99,20 +180,57 @@ export default function CanvasEditor({
   const completedPercent = taskCounter === 0 ? 0 : (completedCounter / taskCounter) * 100;
 
   return (
-    <div className="flex h-screen w-full flex-col bg-gray-50 overflow-hidden relative">
-      
+    <div className="flex h-screen w-full flex-col bg-gray-200 overflow-hidden relative">
       <div className="flex flex-1 relative overflow-hidden">
         
-        {/* Холст для рисования */}
-        <div className="flex-1 bg-white relative overflow-hidden cursor-crosshair">
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-          />
+        {/* вьюпорт (не масштабируется)*/}
+        <div 
+          className={`flex-1 relative overflow-hidden ${
+            isPanning
+              ? "cursor-grabbing"
+              : "cursor-crosshair"
+          }`}
+          onMouseDown={handlePanStart}
+          onMouseMove={handlePanMove}
+          onMouseUp={handlePanEnd}
+          onMouseLeave={handlePanEnd}
+        >
+          {/* "сцена" (холст с серыми точками, масштабируется)*/}
+          <div
+            className="absolute inset-0 bg-white"
+            style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: "center",
+            transition: isPanning
+              ? "none"
+              : isZoomAnimating
+              ? "transform 200ms ease-out"
+              : "none",
+            backgroundImage:"radial-gradient(circle, #d4d4d8 2px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+          >
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full"
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+            />
+            {/* cлой, на котором рендерятся объекты*/}
+            <div className="absolute inset-0">
+              {objects.map((obj) => (
+                <ObjectWrapper
+                  key={obj.id}
+                  obj={obj}
+                  isSelected={selectedId === obj.id}
+                  onSelect={() => setSelectedId(obj.id)}
+                  onDelete={() => handleDeleteObject(obj.id)}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ПАНЕЛЬ TO DO (справа) */}
@@ -230,9 +348,25 @@ export default function CanvasEditor({
         <div className="w-px h-6 bg-white/30"></div>
         
         <div className="flex items-center gap-2 text-white">
-          <Minus size={18} className="opacity-60 hover:opacity-100 cursor-pointer" />
-          <span className="text-[14px] font-['Inter'] select-none">75%</span>
-          <Plus size={18} className="opacity-60 hover:opacity-100 cursor-pointer" />
+          <button
+            type="button"
+            onClick={zoomOut}
+            disabled={percent >= MAX_PERCENT}
+            aria-label="Уменьшить"
+            className="opacity-60 hover:opacity-100 disabled:opacity-20 transition-opacity"
+          >
+            <Minus size={18} />
+          </button>
+          <span className="text-[14px] font-['Inter'] select-none">{Math.round(percent)}%</span>
+          <button
+            type="button"
+            onClick={zoomIn}
+            disabled={percent <= MIN_PERCENT}
+            aria-label="Увеличить"
+            className="opacity-60 hover:opacity-100 disabled:opacity-20 transition-opacity"
+          >
+            <Plus size={18} />
+          </button>
         </div>
       </div>
 
