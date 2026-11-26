@@ -13,11 +13,10 @@ export default function AddTaskModal({
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  // Закрытие по Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        e.stopPropagation(); // Предотвращаем всплытие события
+        e.stopPropagation(); 
         onClose();
       }
     };
@@ -27,13 +26,13 @@ export default function AddTaskModal({
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    event.stopPropagation(); // КРИТИЧЕСКИ ВАЖНО: предотвращаем всплытие к родительскому onClick (router.push)
+    event.stopPropagation(); 
 
     const trimmedName = title.trim();
 
     if (!trimmedName) {
       setError("Пожалуйста, введите название задачи");
-      return; // Модальное окно останется открытым, перехода не будет
+      return; 
     }
 
     setPending(true);
@@ -42,7 +41,6 @@ export default function AddTaskModal({
       if (serverError) {
         setError(serverError);
       } else {
-        // Если ошибки нет — закрываем модалку
         onClose();
       }
     } catch {
@@ -57,7 +55,7 @@ export default function AddTaskModal({
       role="dialog"
       aria-modal="true"
       onMouseDown={(e) => {
-        e.stopPropagation(); // Предотвращаем всплытие клика по фону
+        e.stopPropagation(); 
         if (e.target === e.currentTarget) {
           e.stopPropagation();
           onClose();
@@ -74,7 +72,7 @@ export default function AddTaskModal({
           type="button"
           aria-label="Закрыть"
           onClick={(e) => {
-            e.stopPropagation(); // КРИТИЧЕСКИ ВАЖНО: предотвращаем всплытие клика по крестику
+            e.stopPropagation(); 
             onClose();
           }}
           className="absolute top-4 right-5 text-gray-500 hover:text-black transition-colors text-3xl font-light leading-none"
@@ -105,7 +103,7 @@ export default function AddTaskModal({
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                e.stopPropagation(); // Доп. защита от всплытия события Enter
+                e.stopPropagation(); 
               }
             }}
             className="w-full text-[20px] text-gray-700 px-4 py-3 bg-white rounded-[20px] focus:outline-none focus:ring-2 focus:ring-main focus:border-transparent transition-all"
@@ -118,7 +116,7 @@ export default function AddTaskModal({
           <button 
             type="submit"
             disabled={pending}
-            onClick={(e) => e.stopPropagation()} // Доп. защита от всплытия клика по кнопке
+            onClick={(e) => e.stopPropagation()} 
             className="w-full mt-6 disabled:opacity-60 bg-[#6B78E5] hover:bg-[#5A67D8] text-white font-normal text-[22px] py-4 rounded-[20px] transition-colors duration-200"
           >
             {pending ? "Добавление..." : "Добавить"}

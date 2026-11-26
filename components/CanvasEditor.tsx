@@ -97,10 +97,7 @@ export default function CanvasEditor({
     setSelectedId(null);
   };
 
-  {/* Здесь хранятся все объекты
-      По умолчанию создаются два тестовых: круг и прямоугольник
-      !!! ИХ НАДО БУДЕТ УДАЛИТЬ !!! 
-      Они просто для демонстрации выделения и удаления по крестику*/}
+ 
   const [objects, setObjects] = useState<CanvasObject[]>([
   {
     id: "circle-1",
@@ -183,7 +180,6 @@ export default function CanvasEditor({
     <div className="flex h-screen w-full flex-col bg-gray-200 overflow-hidden relative">
       <div className="flex flex-1 relative overflow-hidden">
         
-        {/* вьюпорт (не масштабируется)*/}
         <div 
           className={`flex-1 relative overflow-hidden ${
             isPanning
@@ -195,7 +191,6 @@ export default function CanvasEditor({
           onMouseUp={handlePanEnd}
           onMouseLeave={handlePanEnd}
         >
-          {/* "сцена" (холст с серыми точками, масштабируется)*/}
           <div
             className="absolute inset-0 bg-white"
             style={{
@@ -218,7 +213,6 @@ export default function CanvasEditor({
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
             />
-            {/* cлой, на котором рендерятся объекты*/}
             <div className="absolute inset-0">
               {objects.map((obj) => (
                 <ObjectWrapper
@@ -233,7 +227,6 @@ export default function CanvasEditor({
           </div>
         </div>
 
-        {/* ПАНЕЛЬ TO DO (справа) */}
         <div 
           className={`
             absolute right-0 top-0 bottom-0 w-[380px] bg-[#E6F0FF] border-l border-main/20 shadow-2xl transition-transform duration-300 ease-in-out z-20 flex flex-col
@@ -311,7 +304,6 @@ export default function CanvasEditor({
         </div>
       </div>
 
-      {/* НИЖНЯЯ ПАНЕЛЬ */}
       <div 
         className={`
           absolute bottom-6 -translate-x-1/2 w-[600px] bg-[#6B78E5] rounded-[15px] px-8 py-2 flex items-center justify-evenly shadow-lg z-30 transition-all duration-300
@@ -340,7 +332,6 @@ export default function CanvasEditor({
           <Square size={20} />
         </button>
 
-        {/* Заменили Search на MessageCircle */}
         <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white" title="Комментарии">
           <MessageCircle size={20} />
         </button>

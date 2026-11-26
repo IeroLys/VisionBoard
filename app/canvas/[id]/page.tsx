@@ -16,7 +16,7 @@ export default async function CanvasPage({ params }: { params: Promise<{ id: str
       canvasId={canvas.id} 
       canvasTitle={canvas.title} 
       initialTasks={canvas.tasks} 
-      projectId={canvas.project.id} // <-- Передаем ID проекта
+      projectId={canvas.project.id} 
     />
   );
 }

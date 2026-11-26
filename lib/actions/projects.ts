@@ -145,7 +145,6 @@ export async function deleteProject(
   return { ok: true, data: deleted };
 }
 
-// ---------- Приглашения ----------
 
 export async function generateInviteToken(projectId: string) {
   const userId = await getUserId();
@@ -200,7 +199,6 @@ export async function joinProjectByToken(token: string) {
 }
 
 
-// Проверка, является ли пользователь участником проекта
 export async function isProjectMember(projectId: string, userId: string) {
   const member = await db.query.projectMembers.findFirst({
     where: and(
@@ -209,4 +207,22 @@ export async function isProjectMember(projectId: string, userId: string) {
     ),
   });
   return !!member;
+}
+
+
+export async function getProjectWithMembersByToken(token: string) {
+  const found = await db.query.project.findFirst({
+    where: eq(project.inviteToken, token),
+    columns: { id: true, title: true, userId: true },
+    with: {
+      members: {
+        with: {
+          user: {
+            columns: { id: true, name: true, email: true, image: true }
+          }
+        }
+      }
+    }
+  });
+  return found ?? null;
 }

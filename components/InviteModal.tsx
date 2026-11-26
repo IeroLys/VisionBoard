@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { generateInviteToken } from "@/lib/actions/projects";
+import { generateInviteToken, getProjectWithMembersByToken } from "@/lib/actions/projects";
 
 export default function InviteModal({ 
   onClose,
@@ -17,15 +17,24 @@ export default function InviteModal({
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [members, setMembers] = useState<any[]>([]); // Пока any, потом типизируем
 
   useEffect(() => {
     const generate = async () => {
       setLoading(true);
+      
+      // 1. Генерируем токен
       const result = await generateInviteToken(projectId);
       
       if (result.ok && result.data) {
         const baseUrl = window.location.origin;
         setLink(`${baseUrl}/invite?token=${result.data}&title=${encodeURIComponent(projectTitle)}`);
+
+        // 2. Загружаем участников по этому токену
+        const projectWithMembers = await getProjectWithMembersByToken(result.data);
+        if (projectWithMembers) {
+          setMembers(projectWithMembers.members || []);
+        }
       } else {
         setError("Не удалось сгенерировать ссылку");
       }
@@ -91,12 +100,45 @@ export default function InviteModal({
           {error && <p className="text-red-500 text-[14px] text-center">{error}</p>}
         </div>
 
+        {/* Список участников */}
         <div className="flex flex-col gap-2">
           <label className="text-[20px] text-black font-['Inter']">Участники проекта:</label>
-          <div className="bg-white rounded-[15px] p-6 text-center min-h-[150px] flex items-center justify-center border-2 border-transparent">
-            <p className="text-[16px] text-black font-['Inter']">
-              Здесь пока никого нет, поделитесь<br />ссылкой для приглашения
-            </p>
+          
+          <div className="bg-white rounded-[15px] max-h-[200px] overflow-y-auto scrollbar-hide border-2 border-transparent">
+            {members.length === 0 ? (
+              <div className="p-6 text-center min-h-[100px] flex items-center justify-center">
+                <p className="text-[16px] text-black font-['Inter']">
+                  Здесь пока никого нет, поделитесь<br />ссылкой для приглашения
+                </p>
+              </div>
+            ) : (
+              <ul className="flex flex-col">
+                {members.map((member) => (
+                  <li 
+                    key={member.userId} 
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-default shrink-0 border-b border-gray-100 last:border-0"
+                  >
+                    {/* Аватарка (если есть image, иначе первая буква имени) */}
+                    <div className="w-10 h-10 rounded-full bg-main flex items-center justify-center text-white text-lg font-bold shrink-0 overflow-hidden">
+                      {member.user.image ? (
+                        <img src={member.user.image} alt={member.user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        member.user.name?.charAt(0).toUpperCase() || "?"
+                      )}
+                    </div>
+                    {/* Имя и email */}
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[16px] text-black font-['Inter'] truncate">
+                        {member.user.name}
+                      </span>
+                      <span className="text-[12px] text-gray-500 font-['Inter'] truncate">
+                        {member.user.email}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 

@@ -11,7 +11,6 @@ export async function getUserId(): Promise<string | null> {
   return session?.user.id ?? null;
 }
 
-/** Trims and validates a user-supplied title. Returns an error message or the clean title. */
 export function parseTitle(
   raw: unknown,
   emptyMessage: string,

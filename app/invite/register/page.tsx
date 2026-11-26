@@ -14,7 +14,6 @@ export default async function InviteRegisterPage({
     return <div className="text-center p-10">Ссылка недействительна</div>;
   }
 
-  // Получаем проект из БД, чтобы показать его название
   const project = await getProjectByToken(token);
   if (!project) {
     notFound();
@@ -40,15 +39,12 @@ export default async function InviteRegisterPage({
           </p>
         </div>
 
-        {/* Заголовок "Регистрация" */}
         <h2 className="text-[34px] text-main-desaturated text-center font-['Inter'] font-normal mb-6 mt-6">
           Регистрация
         </h2>
         
-        {/* Форма регистрации с токеном */}
         <InviteRegisterForm inviteToken={token} />
 
-        {/* Ссылка на вход */}
         <div className="flex justify-center mt-6 gap-1 text-[19px] font-['Inter']">
           <span className="text-black">Уже есть аккаунт?</span>
           <Link 

@@ -21,7 +21,6 @@ export default async function InvitePage({
   const session = await getServerSession();
   const isAuth = !!session;
   
-  // Проверяем, является ли пользователь участником
   let isMember = false;
   if (isAuth && session?.user?.id) {
     isMember = await isProjectMember(project.id, session.user.id);
@@ -31,7 +30,6 @@ export default async function InvitePage({
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-[500px] bg-overcast-sky rounded-[25px] px-8 pb-8 pt-10 shadow-sm border border-main/20 text-center">
         
-        {/* Если пользователь уже участник — показываем только плашку и кнопки */}
         {isAuth && isMember ? (
           <div className="flex flex-col items-center gap-6">
             <p className="text-main-desaturated text-[28px] font-['Inter'] text-center">
@@ -55,7 +53,6 @@ export default async function InvitePage({
             </div>
           </div>
         ) : (
-          // Если не участник или нет сессии — стандартный флоу
           <>
             <div className="mb-6">
               <p className="text-[20px] text-black font-['Inter'] font-light mb-2">

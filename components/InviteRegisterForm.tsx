@@ -30,7 +30,6 @@ export default function InviteRegisterForm({ inviteToken }: { inviteToken?: stri
     setError("");
 
     try {
-      // 1. РЕГИСТРАЦИЯ
       const { error: authError } = await authClient.signUp.email({ 
         email, 
         password, 
@@ -42,7 +41,6 @@ export default function InviteRegisterForm({ inviteToken }: { inviteToken?: stri
         return;
       }
 
-      // 2. ПРИСОЕДИНЕНИЕ И ПЕРЕХОД В ПРОЕКТ
       if (inviteToken) {
         const joinResult = await joinProjectByToken(inviteToken);
         if (joinResult.ok && joinResult.data) {
@@ -54,7 +52,6 @@ export default function InviteRegisterForm({ inviteToken }: { inviteToken?: stri
         }
       }
 
-      // Если токена нет — на главную
       router.push("/");
       router.refresh();
       
@@ -68,7 +65,6 @@ export default function InviteRegisterForm({ inviteToken }: { inviteToken?: stri
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
       
-      {/* Поле Имя */}
       <div>
         <label className="block text-[20px] text-black font-['Inter'] font-light mb-1 ml-2">
           Введите имя:
@@ -81,7 +77,6 @@ export default function InviteRegisterForm({ inviteToken }: { inviteToken?: stri
         />
       </div>
 
-      {/* Поле Email */}
       <div>
         <label className="block text-[20px] text-black font-['Inter'] font-light mb-1 ml-2">
           Введите email:
@@ -94,7 +89,6 @@ export default function InviteRegisterForm({ inviteToken }: { inviteToken?: stri
         />
       </div>
 
-      {/* Поле Пароль с глазом */}
       <div>
         <label className="block text-[20px] text-black font-['Inter'] font-light mb-1 ml-2">
           Придумайте пароль:
