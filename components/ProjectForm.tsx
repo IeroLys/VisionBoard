@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, ChevronDown, ChevronUp, Users, Home } from "lucide-react";
 import Link from "next/link";
 import TodoCard, { type TodoTask } from "@/components/todo-card";
@@ -25,6 +26,7 @@ export default function ProjectForm({
   title?: string;
   initialCanvases?: Canvas[];
 }) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [canvs, setCanvs] = useState<Canvas[]>(initialCanvases);
@@ -61,6 +63,7 @@ export default function ProjectForm({
     <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
       <div className="flex w-full max-w-[1100px] flex-col gap-6">
         
+        {/* ШАПКА */}
         <div className="w-full bg-overcast-sky rounded-[20px] p-6 md:p-8 flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
             <h1 className="text-[30px] md:text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight truncate">
@@ -87,8 +90,10 @@ export default function ProjectForm({
           </div>
         </div>
 
+        {/* ОПИСАНИЕ */}
         <ProjectDescription />
 
+        {/* ХОЛСТЫ */}
         <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-8">
           {canvs.length === 0 ? (
             <div className="flex flex-col items-center justify-center">
@@ -111,29 +116,27 @@ export default function ProjectForm({
                   {visibleCanvs.map((canvas) => (
                     <div 
                       key={canvas.id} 
-                      className="flex flex-col gap-2 h-[500px] w-full transition-transform duration-200 hover:scale-[1.02]"
+                      onClick={() => router.push(`/canvas/${canvas.id}`)}
+                      className="flex flex-col gap-2 h-[520px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
                     >
                       <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-4 transition-colors hover:bg-[#c2ddf8]">
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          <Link
-                            href={`/canvas/${canvas.id}`}
-                            className="group flex-1 min-w-0 cursor-pointer"
-                          >
-                            <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[26px] font-light text-black">
-                              {canvas.title}
-                            </span>
-                          </Link>
-                          <ItemMenu
-                            itemTitle={canvas.title}
-                            kind={{
-                              label: "холста",
-                              renameTitle: "Переименование",
-                              deleteTitle: "Удалить холст?",
-                              deleteWarning: "Все задачи холста будут удалены без возможности восстановления.",
-                            }}
-                            onRename={(newTitle) => handleRenameCanvas(canvas.id, newTitle)}
-                            onDelete={() => handleDeleteCanvas(canvas.id)}
-                          />
+                          <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[26px] font-light text-black">
+                            {canvas.title}
+                          </span>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <ItemMenu
+                              itemTitle={canvas.title}
+                              kind={{
+                                label: "холста",
+                                renameTitle: "Переименование",
+                                deleteTitle: "Удалить холст?",
+                                deleteWarning: "Все задачи холста будут удалены без возможности восстановления.",
+                              }}
+                              onRename={(newTitle) => handleRenameCanvas(canvas.id, newTitle)}
+                              onDelete={() => handleDeleteCanvas(canvas.id)}
+                            />
+                          </div>
                         </div>
                         <div className="mt-auto flex-1 min-h-0 overflow-hidden flex flex-col justify-end">
                           <TodoCard canvasId={canvas.id} initialTasks={canvas.tasks} />
@@ -143,7 +146,7 @@ export default function ProjectForm({
                   ))}
 
                   {!showAll && (
-                    <div className="flex flex-col gap-2 h-[480px] w-full">
+                    <div className="flex flex-col gap-2 h-[520px] w-full">
                       <button
                         onClick={() => setIsModalOpen(true)}
                         className="group flex flex-col items-center justify-center h-full w-full rounded-[15px] bg-overcast-sky transition-colors hover:bg-[#c2ddf8]"
@@ -191,6 +194,7 @@ export default function ProjectForm({
         </div>
       </div>
 
+      {/* МОДАЛКИ */}
       {isModalOpen && (
         <CreateCanvasModal
           onClose={() => setIsModalOpen(false)}

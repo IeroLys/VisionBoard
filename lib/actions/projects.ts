@@ -198,3 +198,15 @@ export async function joinProjectByToken(token: string) {
   revalidatePath("/");
   return { ok: true, data: projectFound.id };
 }
+
+
+// Проверка, является ли пользователь участником проекта
+export async function isProjectMember(projectId: string, userId: string) {
+  const member = await db.query.projectMembers.findFirst({
+    where: and(
+      eq(projectMembers.projectId, projectId),
+      eq(projectMembers.userId, userId)
+    ),
+  });
+  return !!member;
+}
