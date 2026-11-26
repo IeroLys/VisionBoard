@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, primaryKey } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -77,6 +77,7 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   projects: many(project),
+  projectMemberships: many(projectMembers),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -103,6 +104,7 @@ export const project = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     title: text("title").notNull(),
     description: text("description").default("").notNull(),
+    inviteToken: text("invite_token").unique(),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -113,6 +115,21 @@ export const project = pgTable(
       .notNull(),
   },
   (table) => [index("project_userId_idx").on(table.userId)],
+);
+
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.projectId, table.userId] }),
+  ]
 );
 
 export const canvas = pgTable(
@@ -153,6 +170,18 @@ export const task = pgTable(
 export const projectRelations = relations(project, ({ one, many }) => ({
   user: one(user, { fields: [project.userId], references: [user.id] }),
   canvases: many(canvas),
+  members: many(projectMembers),
+}));
+
+export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
+  project: one(project, {
+    fields: [projectMembers.projectId],
+    references: [project.id],
+  }),
+  user: one(user, {
+    fields: [projectMembers.userId],
+    references: [user.id],
+  }),
 }));
 
 export const canvasRelations = relations(canvas, ({ one, many }) => ({

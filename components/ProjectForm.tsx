@@ -1,78 +1,93 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import CreateCanvasModal from "@/components/create-canvas"
-import { Plus, ChevronDown, ChevronUp } from "lucide-react"
-import TodoCard, { type TodoTask } from "@/components/todo-card"
-import ItemMenu from "@/components/item-menu"
-import PageHeader from "@/components/page-header"
-import ProjectDescription from "@/components/ProjectDescription"
-import { updateProjectDescription } from "@/lib/actions/projects"
+import { useState } from "react";
+import { Plus, ChevronDown, ChevronUp, Users, Home } from "lucide-react";
+import Link from "next/link";
+import TodoCard, { type TodoTask } from "@/components/todo-card";
+import ItemMenu from "@/components/item-menu";
+import ProjectDescription from "@/components/ProjectDescription";
+import InviteModal from "@/components/InviteModal";
+import CreateCanvasModal from "@/components/create-canvas";
 import {
   createCanvas,
   deleteCanvas,
   renameCanvas,
-} from "@/lib/actions/canvases"
+} from "@/lib/actions/canvases";
 
-type Canvas = { id: string; title: string; tasks: TodoTask[] }
+type Canvas = { id: string; title: string; tasks: TodoTask[] };
 
 export default function ProjectForm({
   id,
   title,
-  description = "",
   initialCanvases = [],
 }: {
-  id: string
-  title?: string
-  description?: string
-  initialCanvases?: Canvas[]
+  id: string;
+  title?: string;
+  initialCanvases?: Canvas[];
 }) {
-  const router = useRouter()
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [canvs, setCanvs] = useState<Canvas[]>(initialCanvases)
-  const [showAll, setShowAll] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [canvs, setCanvs] = useState<Canvas[]>(initialCanvases);
+  const [showAll, setShowAll] = useState(false);
 
   const handleCreateCanvas = async (canvasName: string) => {
-    const result = await createCanvas(id, canvasName)
-    if (!result.ok) return result.error
-    const { id: canvasId, title } = result.data
-    setCanvs((prev) => [...prev, { id: canvasId, title, tasks: [] }])
-    setIsModalOpen(false)
-  }
+    const result = await createCanvas(id, canvasName);
+    if (!result.ok) return result.error;
+    const { id: canvasId, title } = result.data;
+    setCanvs((prev) => [...prev, { id: canvasId, title, tasks: [] }]);
+    setIsModalOpen(false);
+  };
 
   const handleRenameCanvas = async (canvasId: string, newTitle: string) => {
-    const result = await renameCanvas(canvasId, newTitle)
-    if (!result.ok) return result.error
+    const result = await renameCanvas(canvasId, newTitle);
+    if (!result.ok) return result.error;
     setCanvs((prev) =>
       prev.map((c) =>
         c.id === canvasId ? { ...c, title: result.data.title } : c
       )
-    )
-  }
+    );
+  };
 
   const handleDeleteCanvas = async (canvasId: string) => {
-    const result = await deleteCanvas(canvasId)
-    if (!result.ok) return result.error
-    setCanvs((prev) => prev.filter((c) => c.id !== canvasId))
-  }
+    const result = await deleteCanvas(canvasId);
+    if (!result.ok) return result.error;
+    setCanvs((prev) => prev.filter((c) => c.id !== canvasId));
+  };
 
   const visibleCanvs = showAll ? canvs : canvs.slice(0, 2);
-
   const showViewAllButton = canvs.length >= 3 && !showAll;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
       <div className="flex w-full max-w-[1100px] flex-col gap-6">
         
-        <PageHeader homeHref="/" title={title ?? "Проект"} />
-        <ProjectDescription
-          initialDescription={description}
-          onSave={async (value) => {
-            const result = await updateProjectDescription(id, value)
-            if (!result.ok) return result.error
-          }}
-        />
+        <div className="w-full bg-overcast-sky rounded-[20px] p-6 md:p-8 flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-1 min-w-0">
+            <h1 className="text-[30px] md:text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight truncate">
+              {title ?? "Проект"}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated"
+              title="Пригласить участников"
+            >
+              <Users size={28} />
+            </button>
+
+            <Link
+              href="/"
+              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated"
+              title="На главную"
+            >
+              <Home size={28} />
+            </Link>
+          </div>
+        </div>
+
+        <ProjectDescription />
 
         <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-8">
           {canvs.length === 0 ? (
@@ -91,45 +106,35 @@ export default function ProjectForm({
             </div>
           ) : (
             <div className="flex w-full flex-col gap-4">
-              
-              <div 
-                className={
-                  showAll 
-                    ? "w-full max-h-[500px] overflow-y-auto pr-2" 
-                    : "w-full"
-                }
-              >
+              <div className={`w-full ${showAll ? "max-h-[500px] overflow-y-auto pr-2" : ""}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {visibleCanvs.map((canvas) => (
                     <div 
                       key={canvas.id} 
-                      // Клик по карточке (включая пустое место) ведет на холст
-                      onClick={() => router.push(`/canvas/${canvas.id}`)}
-                      className="flex flex-col gap-2 h-[480px] w-full transition-transform duration-200 hover:scale-[1.02] cursor-pointer"
+                      className="flex flex-col gap-2 h-[500px] w-full transition-transform duration-200 hover:scale-[1.02]"
                     >
                       <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-4 transition-colors hover:bg-[#c2ddf8]">
                         <div className="flex justify-between items-start gap-2 mb-2">
-                          {/* Название (без ссылки, так как клик уже на карточке) */}
-                          <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[26px] font-light text-black">
-                            {canvas.title}
-                          </span>
-                          {/* Меню: останавливаем всплытие, чтобы не было перехода */}
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <ItemMenu
-                              itemTitle={canvas.title}
-                              kind={{
-                                label: "холста",
-                                renameTitle: "Переименование",
-                                deleteTitle: "Удалить холст?",
-                                deleteWarning: "Все задачи холста будут удалены без возможности восстановления.",
-                              }}
-                              onRename={(newTitle) => handleRenameCanvas(canvas.id, newTitle)}
-                              onDelete={() => handleDeleteCanvas(canvas.id)}
-                            />
-                          </div>
+                          <Link
+                            href={`/canvas/${canvas.id}`}
+                            className="group flex-1 min-w-0 cursor-pointer"
+                          >
+                            <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[26px] font-light text-black">
+                              {canvas.title}
+                            </span>
+                          </Link>
+                          <ItemMenu
+                            itemTitle={canvas.title}
+                            kind={{
+                              label: "холста",
+                              renameTitle: "Переименование",
+                              deleteTitle: "Удалить холст?",
+                              deleteWarning: "Все задачи холста будут удалены без возможности восстановления.",
+                            }}
+                            onRename={(newTitle) => handleRenameCanvas(canvas.id, newTitle)}
+                            onDelete={() => handleDeleteCanvas(canvas.id)}
+                          />
                         </div>
-                        {/* TodoCard: убрали stopPropagation, чтобы клик по пустому месту вел на холст.
-                            Внутри TodoCard интерактивные элементы сами останавливают всплытие. */}
                         <div className="mt-auto flex-1 min-h-0 overflow-hidden flex flex-col justify-end">
                           <TodoCard canvasId={canvas.id} initialTasks={canvas.tasks} />
                         </div>
@@ -185,6 +190,7 @@ export default function ProjectForm({
           )}
         </div>
       </div>
+
       {isModalOpen && (
         <CreateCanvasModal
           onClose={() => setIsModalOpen(false)}
@@ -192,6 +198,14 @@ export default function ProjectForm({
           existingCanvs={canvs.map((p) => p.title)}
         />
       )}
+
+      {isInviteOpen && (
+        <InviteModal
+          onClose={() => setIsInviteOpen(false)}
+          projectTitle={title ?? "Проект"}
+          projectId={id}
+        />
+      )}
     </div>
-  )
+  );
 }

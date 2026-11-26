@@ -1,9 +1,9 @@
 "use server";
 
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql, or, exists } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { project, type Project } from "@/db/schema";
+import { project, projectMembers, type Project } from "@/db/schema";
 import {
   type ActionResult,
   getUserId,
@@ -17,11 +17,23 @@ export type ProjectSummary = Project & { canvasCount: number };
 export async function getProjects(): Promise<ProjectSummary[]> {
   const userId = await getUserId();
   if (!userId) return [];
+
   const rows = await db.query.project.findMany({
-    where: eq(project.userId, userId),
+    where: or(
+      eq(project.userId, userId),
+      exists(
+        db.select().from(projectMembers).where(
+          and(
+            eq(projectMembers.projectId, project.id),
+            eq(projectMembers.userId, userId)
+          )
+        )
+      )
+    ),
     orderBy: [asc(project.createdAt)],
     with: { canvases: { columns: { id: true } } },
   });
+
   return rows.map(({ canvases, ...p }) => ({ ...p, canvasCount: canvases.length }));
 }
 
@@ -123,7 +135,6 @@ export async function deleteProject(
   const userId = await getUserId();
   if (!userId) return { ok: false, error: UNAUTHORIZED };
 
-  // Canvases and tasks are removed by ON DELETE CASCADE.
   const [deleted] = await db
     .delete(project)
     .where(and(eq(project.id, projectId), eq(project.userId, userId)))
@@ -132,4 +143,58 @@ export async function deleteProject(
 
   revalidatePath("/");
   return { ok: true, data: deleted };
+}
+
+// ---------- Приглашения ----------
+
+export async function generateInviteToken(projectId: string) {
+  const userId = await getUserId();
+  if (!userId) return { ok: false, error: UNAUTHORIZED };
+
+  const owned = await db.query.project.findFirst({
+    where: and(eq(project.id, projectId), eq(project.userId, userId)),
+  });
+
+  if (!owned) return { ok: false, error: NOT_FOUND };
+
+  const token = crypto.randomUUID();
+  await db.update(project).set({ inviteToken: token }).where(eq(project.id, projectId));
+
+  return { ok: true, data: token };
+}
+
+export async function getProjectByToken(token: string) {
+  const found = await db.query.project.findFirst({
+    where: eq(project.inviteToken, token),
+    columns: { id: true, title: true, userId: true },
+  });
+  return found ?? null;
+}
+
+export async function joinProjectByToken(token: string) {
+  const userId = await getUserId();
+  if (!userId) return { ok: false, error: UNAUTHORIZED };
+
+  const projectFound = await db.query.project.findFirst({
+    where: eq(project.inviteToken, token),
+  });
+
+  if (!projectFound) return { ok: false, error: "Ссылка недействительна" };
+
+  const alreadyMember = await db.query.projectMembers.findFirst({
+    where: and(
+      eq(projectMembers.projectId, projectFound.id),
+      eq(projectMembers.userId, userId)
+    ),
+  });
+
+  if (!alreadyMember) {
+    await db.insert(projectMembers).values({
+      projectId: projectFound.id,
+      userId: userId,
+    });
+  }
+
+  revalidatePath("/");
+  return { ok: true, data: projectFound.id };
 }

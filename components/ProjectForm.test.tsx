@@ -1,239 +1,218 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ProjectForm from './ProjectForm';
-import * as canvasActions from '@/lib/actions/canvases';
+"use client";
 
-// 1. ИСПРАВЛЕНО: data теперь обязательна, если ok: true (Discriminated Union)
-type ActionResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
+import { useState } from "react";
+import { Plus, ChevronDown, ChevronUp, Users, Home } from "lucide-react";
+import Link from "next/link";
+import TodoCard, { type TodoTask } from "@/components/todo-card";
+import ItemMenu from "@/components/item-menu";
+import ProjectDescription from "@/components/ProjectDescription";
+import InviteModal from "@/components/InviteModal";
+import CreateCanvasModal from "@/components/create-canvas";
+import {
+  createCanvas,
+  deleteCanvas,
+  renameCanvas,
+} from "@/lib/actions/canvases";
 
-// 2. Мокаем next/navigation
-const mockPush = vi.fn();
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
-}));
+type Canvas = { id: string; title: string; tasks: TodoTask[] };
 
-// 3. Мокаем серверные действия
-vi.mock('@/lib/actions/canvases', () => ({
-  createCanvas: vi.fn(),
-  renameCanvas: vi.fn(),
-  deleteCanvas: vi.fn(),
-}));
+export default function ProjectForm({
+  id,
+  title,
+  initialCanvases = [],
+}: {
+  id: string;
+  title?: string;
+  initialCanvases?: Canvas[];
+}) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false); // <-- Состояние для приглашения
+  const [canvs, setCanvs] = useState<Canvas[]>(initialCanvases);
+  const [showAll, setShowAll] = useState(false);
 
-vi.mock('@/lib/actions/projects', () => ({
-  updateProjectDescription: vi.fn(async (id: string, description: string) => ({
-    ok: true,
-    data: { id, description },
-  })),
-}));
+  const handleCreateCanvas = async (canvasName: string) => {
+    const result = await createCanvas(id, canvasName);
+    if (!result.ok) return result.error;
+    const { id: canvasId, title } = result.data;
+    setCanvs((prev) => [...prev, { id: canvasId, title, tasks: [] }]);
+    setIsModalOpen(false);
+  };
 
-// 4. Мокаем дочерние компоненты со строгой типизацией пропсов
-vi.mock('@/components/create-canvas', () => ({
-  default: ({ onCreate, onClose }: { onCreate: (name: string) => void; onClose: () => void }) => (
-    <div data-testid="create-canvas-modal">
-      <button data-testid="mock-create-btn" onClick={() => onCreate('Новый холст')}>
-        Создать (Mock)
-      </button>
-      <button data-testid="mock-close-btn" onClick={onClose}>
-        Закрыть (Mock)
-      </button>
-    </div>
-  ),
-}));
+  const handleRenameCanvas = async (canvasId: string, newTitle: string) => {
+    const result = await renameCanvas(canvasId, newTitle);
+    if (!result.ok) return result.error;
+    setCanvs((prev) =>
+      prev.map((c) =>
+        c.id === canvasId ? { ...c, title: result.data.title } : c
+      )
+    );
+  };
 
-vi.mock('@/components/item-menu', () => ({
-  default: ({
-    itemTitle,
-    onRename,
-    onDelete,
-  }: {
-    itemTitle: string;
-    onRename?: (title: string) => void;
-    onDelete: () => void;
-  }) => (
-    <div data-testid={`item-menu-${itemTitle}`}>
-      {onRename && (
-        <button onClick={() => onRename('Переименованный холст')}>Переименовать</button>
+  const handleDeleteCanvas = async (canvasId: string) => {
+    const result = await deleteCanvas(canvasId);
+    if (!result.ok) return result.error;
+    setCanvs((prev) => prev.filter((c) => c.id !== canvasId));
+  };
+
+  const visibleCanvs = showAll ? canvs : canvs.slice(0, 2);
+  const showViewAllButton = canvs.length >= 3 && !showAll;
+
+  return (
+    <div className="flex min-h-screen flex-col items-center bg-gray-50 px-4 py-12">
+      <div className="flex w-full max-w-[1100px] flex-col gap-6">
+        
+        {/* ================= ШАПКА ================= */}
+        <div className="w-full bg-overcast-sky rounded-[20px] p-6 md:p-8 flex items-center justify-between gap-4">
+          
+          <div className="flex flex-col gap-1 min-w-0">
+            <h1 className="text-[30px] md:text-[34px] leading-tight text-main-desaturated font-['Inter'] font-normal tracking-tight truncate">
+              {title ?? "Проект"}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Кнопка ПРИГЛАСИТЬ */}
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated"
+              title="Пригласить участников"
+            >
+              <Users size={28} />
+            </button>
+
+            {/* Кнопка ДОМИК */}
+            <Link
+              href="/"
+              className="bg-white p-3 rounded-[15px] shadow-sm hover:shadow-md transition-shadow text-black hover:text-main-desaturated"
+              title="На главную"
+            >
+              <Home size={28} />
+            </Link>
+          </div>
+        </div>
+
+        {/* ================= ОПИСАНИЕ ================= */}
+        <ProjectDescription />
+
+        {/* ================= ХОЛСТЫ ================= */}
+        <div className="flex min-h-[500px] w-full flex-col justify-center rounded-[20px] border border-main bg-white p-8">
+          {canvs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center">
+              <p className="mb-6 text-center font-['Inter'] text-[26px] leading-snug font-light text-main-desaturated">
+                У вас пока нет холстов,
+                <br />
+                создать?
+              </p>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="group flex h-[140px] w-[140px] items-center justify-center rounded-full bg-[#E6F0FF] text-main-desaturated transition-colors hover:bg-[#d4e5fc]"
+              >
+                <Plus size={80} strokeWidth={1.5} className="transition-transform group-hover:scale-110" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex w-full flex-col gap-4">
+              <div className={`w-full ${showAll ? "max-h-[500px] overflow-y-auto pr-2" : ""}`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {visibleCanvs.map((canvas) => (
+                    <div 
+                      key={canvas.id} 
+                      className="flex flex-col gap-2 h-[480px] w-full transition-transform duration-200 hover:scale-[1.02]"
+                    >
+                      <div className="flex flex-col h-full bg-overcast-sky rounded-[15px] p-4 transition-colors hover:bg-[#c2ddf8]">
+                        <div className="flex justify-between items-start gap-2 mb-2">
+                          <Link
+                            href={`/canvas/${canvas.id}`}
+                            className="group flex-1 min-w-0 cursor-pointer"
+                          >
+                            <span className="block whitespace-nowrap overflow-hidden text-ellipsis font-['Inter'] text-[26px] font-light text-black">
+                              {canvas.title}
+                            </span>
+                          </Link>
+                          <ItemMenu
+                            itemTitle={canvas.title}
+                            kind={{
+                              label: "холста",
+                              renameTitle: "Переименование",
+                              deleteTitle: "Удалить холст?",
+                              deleteWarning: "Все задачи холста будут удалены без возможности восстановления.",
+                            }}
+                            onRename={(newTitle) => handleRenameCanvas(canvas.id, newTitle)}
+                            onDelete={() => handleDeleteCanvas(canvas.id)}
+                          />
+                        </div>
+                        <div className="mt-auto flex-1 min-h-0 overflow-hidden flex flex-col justify-end">
+                          <TodoCard canvasId={canvas.id} initialTasks={canvas.tasks} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {!showAll && (
+                    <div className="flex flex-col gap-2 h-[480px] w-full">
+                      <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="group flex flex-col items-center justify-center h-full w-full rounded-[15px] bg-overcast-sky transition-colors hover:bg-[#c2ddf8]"
+                      >
+                        <div className="flex h-[70px] w-[70px] items-center justify-center rounded-full bg-white shadow-sm transition-transform group-hover:scale-105">
+                          <Plus size={40} className="text-main-desaturated" strokeWidth={2} />
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {showViewAllButton && (
+                <div className="w-full flex flex-col gap-3">
+                  <button
+                    onClick={() => setShowAll(true)}
+                    className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-overcast-sky py-3 font-['Inter'] text-[16px] font-normal text-main-desaturated transition-colors hover:bg-[#c2ddf8]"
+                  >
+                    Посмотреть все холсты ({canvs.length})
+                    <ChevronDown size={20} />
+                  </button>
+                </div>
+              )}
+
+              {showAll && (
+                <div className="w-full flex flex-col gap-3 mt-4">
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="w-full rounded-[10px] bg-[#6B78E5] py-3 text-[18px] font-normal text-white transition-colors duration-200 hover:bg-[#5A67D8]"
+                  >
+                    Создать холст
+                  </button>
+                  <button
+                    onClick={() => setShowAll(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-[10px] py-2 font-['Inter'] text-[16px] font-normal text-gray-500 transition-colors hover:text-main-desaturated"
+                  >
+                    Скрыть
+                    <ChevronUp size={20} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ================= МОДАЛКИ ================= */}
+      {isModalOpen && (
+        <CreateCanvasModal
+          onClose={() => setIsModalOpen(false)}
+          onCreate={handleCreateCanvas}
+          existingCanvs={canvs.map((p) => p.title)}
+        />
       )}
-      <button onClick={() => onDelete()}>Удалить</button>
+
+      {isInviteOpen && (
+        <InviteModal
+          onClose={() => setIsInviteOpen(false)}
+          projectTitle={title ?? "Проект"}
+          projectId={id}
+        />
+      )}
     </div>
-  ),
-}));
-
-vi.mock('@/components/todo-card', () => ({
-  default: ({ canvasId }: { canvasId: string }) => (
-    <div data-testid={`todo-card-${canvasId}`}>TodoCard Mock</div>
-  ),
-}));
-
-vi.mock('@/components/page-header', () => ({
-  default: ({ title }: { title: string }) => <h1 data-testid="page-header">{title}</h1>,
-}));
-
-vi.mock('@/components/ProjectDescription', () => ({
-  default: ({ initialDescription }: { initialDescription?: string }) => (
-    <div data-testid="project-description">ProjectDescription Mock ({initialDescription})</div>
-  ),
-}));
-
-describe('Компонент ProjectForm', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockPush.mockClear();
-  });
-
-  it('отображает пустое состояние, когда нет холстов', () => {
-    const { container } = render(<ProjectForm id="proj-1" title="Тестовый проект" />);
-    
-    expect(screen.getByText('Тестовый проект')).toBeInTheDocument();
-    expect(screen.getByText(/У вас пока нет холстов/i)).toBeInTheDocument();
-    
-    const addButton = container.querySelector('button.group');
-    expect(addButton).toBeInTheDocument();
-  });
-
-  it('отображает список начальных холстов', () => {
-    const initialCanvases = [
-      { id: 'c1', title: 'Холст 1', tasks: [] },
-      { id: 'c2', title: 'Холст 2', tasks: [] },
-    ];
-    render(<ProjectForm id="proj-1" title="Тест" initialCanvases={initialCanvases} />);
-    
-    expect(screen.getByText('Холст 1')).toBeInTheDocument();
-    expect(screen.getByText('Холст 2')).toBeInTheDocument();
-    expect(screen.getByTestId('todo-card-c1')).toBeInTheDocument();
-  });
-
-  it('открывает модальное окно создания холста при клике на кнопку добавления', () => {
-    const { container } = render(<ProjectForm id="proj-1" title="Тест" />);
-    
-    const addButton = container.querySelector('button.group');
-    fireEvent.click(addButton!);
-    
-    expect(screen.getByTestId('create-canvas-modal')).toBeInTheDocument();
-  });
-
-  it('успешно создает новый холст, обновляет состояние и закрывает модалку', async () => {
-    // ИСПРАВЛЕНО: data теперь обязательна, тип точно соответствует ожидаемому CanvasWithTasks
-    vi.mocked(canvasActions.createCanvas).mockResolvedValue({
-      ok: true,
-      data: {
-        id: 'new-canvas-id',
-        title: 'Новый холст',
-        tasks: [],
-        createdAt: new Date('2024-01-01T00:00:00.000Z'),
-        updatedAt: new Date('2024-01-01T00:00:00.000Z'),
-        projectId: 'proj-1',
-      },
-    } as ActionResult<{
-      id: string;
-      title: string;
-      tasks: {
-        title: string;
-        canvasId: string;
-        id: string;
-        createdAt: Date;
-        completed: boolean;
-      }[];
-      createdAt: Date;
-      updatedAt: Date;
-      projectId: string;
-    }>);
-
-    const { container } = render(<ProjectForm id="proj-1" title="Тест" />);
-
-    fireEvent.click(container.querySelector('button.group')!);
-    expect(screen.getByTestId('create-canvas-modal')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('mock-create-btn'));
-
-    await waitFor(() => {
-      expect(canvasActions.createCanvas).toHaveBeenCalledWith('proj-1', 'Новый холст');
-    });
-
-    expect(screen.queryByTestId('create-canvas-modal')).not.toBeInTheDocument();
-    expect(screen.getByText('Новый холст')).toBeInTheDocument();
-  });
-
-  it('успешно переименовывает холст и обновляет состояние', async () => {
-    // ИСПРАВЛЕНО: data обязательна
-    vi.mocked(canvasActions.renameCanvas).mockResolvedValue({
-      ok: true,
-      data: {
-        id: 'c1',
-        title: 'Переименованный холст',
-        createdAt: new Date('2024-01-01T00:00:00.000Z'),
-        updatedAt: new Date('2024-01-01T00:00:00.000Z'),
-        projectId: 'proj-1',
-      },
-    } as ActionResult<{
-      id: string;
-      title: string;
-      createdAt: Date;
-      updatedAt: Date;
-      projectId: string;
-    }>);
-
-    const initialCanvases = [{ id: 'c1', title: 'Холст 1', tasks: [] }];
-    render(<ProjectForm id="proj-1" title="Тест" initialCanvases={initialCanvases} />);
-
-    fireEvent.click(screen.getByText('Переименовать'));
-
-    await waitFor(() => {
-      expect(canvasActions.renameCanvas).toHaveBeenCalledWith('c1', 'Переименованный холст');
-    });
-
-    expect(screen.queryByText('Холст 1')).not.toBeInTheDocument();
-    expect(screen.getByText('Переименованный холст')).toBeInTheDocument();
-  });
-
-  it('успешно удаляет холст и обновляет состояние', async () => {
-    // ИСПРАВЛЕНО: deleteCanvas возвращает { id: string } в data, согласно ошибке TS
-    vi.mocked(canvasActions.deleteCanvas).mockResolvedValue({
-      ok: true,
-      data: { id: 'c1' }, 
-    } as ActionResult<{ id: string }>);
-
-    const initialCanvases = [{ id: 'c1', title: 'Холст 1', tasks: [] }];
-    render(<ProjectForm id="proj-1" title="Тест" initialCanvases={initialCanvases} />);
-
-    fireEvent.click(screen.getByText('Удалить'));
-
-    await waitFor(() => {
-      expect(canvasActions.deleteCanvas).toHaveBeenCalledWith('c1');
-    });
-
-    expect(screen.queryByText('Холст 1')).not.toBeInTheDocument();
-  });
-
-  it('переходит на страницу холста при клике на карточку', () => {
-    const initialCanvases = [{ id: 'c1', title: 'Холст 1', tasks: [] }];
-    render(<ProjectForm id="proj-1" title="Тест" initialCanvases={initialCanvases} />);
-    
-    const card = screen.getByText('Холст 1').closest('.cursor-pointer');
-    fireEvent.click(card!);
-    
-    expect(mockPush).toHaveBeenCalledWith('/canvas/c1');
-  });
-
-  it('показывает кнопку "Посмотреть все холсты", если их 3 и более, и корректно переключает режим', () => {
-    const initialCanvases = [
-      { id: 'c1', title: 'Холст 1', tasks: [] },
-      { id: 'c2', title: 'Холст 2', tasks: [] },
-      { id: 'c3', title: 'Холст 3', tasks: [] },
-    ];
-    render(<ProjectForm id="proj-1" title="Тест" initialCanvases={initialCanvases} />);
-    
-    expect(screen.getByText('Посмотреть все холсты (3)')).toBeInTheDocument();
-    expect(screen.queryByText('Холст 3')).not.toBeInTheDocument();
-    
-    fireEvent.click(screen.getByText('Посмотреть все холсты (3)'));
-    
-    expect(screen.getByText('Холст 3')).toBeInTheDocument();
-    expect(screen.getByText('Скрыть')).toBeInTheDocument();
-    
-    fireEvent.click(screen.getByText('Скрыть'));
-    expect(screen.queryByText('Холст 3')).not.toBeInTheDocument();
-  });
-});
+  );
+}

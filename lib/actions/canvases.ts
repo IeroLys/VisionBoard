@@ -3,7 +3,7 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { canvas, project, task, type Canvas, type Task } from "@/db/schema";
+import { canvas, project, projectMembers, task, type Canvas, type Task } from "@/db/schema";
 import {
   type ActionResult,
   getUserId,
@@ -14,21 +14,34 @@ import {
 
 export type CanvasWithTasks = Canvas & { tasks: Task[] };
 
-async function ownsProject(userId: string, projectId: string) {
+async function hasAccessToProject(userId: string, projectId: string) {
   const found = await db.query.project.findFirst({
-    columns: { id: true },
-    where: and(eq(project.id, projectId), eq(project.userId, userId)),
+    columns: { id: true, userId: true },
+    where: eq(project.id, projectId),
   });
-  return Boolean(found);
+
+  if (!found) return false;
+  if (found.userId === userId) return true;
+
+  const member = await db.query.projectMembers.findFirst({
+    where: and(
+      eq(projectMembers.projectId, projectId),
+      eq(projectMembers.userId, userId)
+    ),
+  });
+
+  return !!member;
 }
 
-/** Returns the project with its canvases and their tasks, or null if the user doesn't own it. */
 export async function getProjectWithCanvases(projectId: string) {
   const userId = await getUserId();
   if (!userId) return null;
 
+  const hasAccess = await hasAccessToProject(userId, projectId);
+  if (!hasAccess) return null;
+
   const found = await db.query.project.findFirst({
-    where: and(eq(project.id, projectId), eq(project.userId, userId)),
+    where: eq(project.id, projectId),
     with: {
       canvases: {
         orderBy: [asc(canvas.createdAt)],
@@ -45,9 +58,9 @@ export async function createCanvas(
 ): Promise<ActionResult<CanvasWithTasks>> {
   const userId = await getUserId();
   if (!userId) return { ok: false, error: UNAUTHORIZED };
-  if (!(await ownsProject(userId, projectId))) {
-    return { ok: false, error: NOT_FOUND };
-  }
+  
+  const hasAccess = await hasAccessToProject(userId, projectId);
+  if (!hasAccess) return { ok: false, error: NOT_FOUND };
 
   const parsed = parseTitle(rawTitle, "Пожалуйста, введите название холста");
   if (!parsed.ok) return parsed;
@@ -77,21 +90,21 @@ export async function deleteCanvas(
   const userId = await getUserId();
   if (!userId) return { ok: false, error: UNAUTHORIZED };
 
-  const owned = await db
-    .select({ id: canvas.id, projectId: canvas.projectId })
-    .from(canvas)
-    .innerJoin(project, eq(canvas.projectId, project.id))
-    .where(and(eq(canvas.id, canvasId), eq(project.userId, userId)))
-    .limit(1);
-  if (owned.length === 0) return { ok: false, error: NOT_FOUND };
+  const found = await db.query.canvas.findFirst({
+    where: eq(canvas.id, canvasId),
+    columns: { projectId: true },
+  });
+  if (!found) return { ok: false, error: NOT_FOUND };
+
+  const hasAccess = await hasAccessToProject(userId, found.projectId);
+  if (!hasAccess) return { ok: false, error: NOT_FOUND };
 
   await db.delete(canvas).where(eq(canvas.id, canvasId));
 
-  revalidatePath(`/project/${owned[0].projectId}`);
+  revalidatePath(`/project/${found.projectId}`);
   return { ok: true, data: { id: canvasId } };
 }
 
-/** Returns the canvas with its project and tasks, or null if the user doesn't own it. */
 export async function getCanvas(canvasId: string) {
   const userId = await getUserId();
   if (!userId) return null;
@@ -103,7 +116,11 @@ export async function getCanvas(canvasId: string) {
       tasks: { orderBy: [asc(task.createdAt)] },
     },
   });
-  if (!found || found.project.userId !== userId) return null;
+  if (!found) return null;
+
+  const hasAccess = await hasAccessToProject(userId, found.project.id);
+  if (!hasAccess) return null;
+
   return found;
 }
 
@@ -117,14 +134,16 @@ export async function renameCanvas(
   const parsed = parseTitle(rawTitle, "Пожалуйста, введите название холста");
   if (!parsed.ok) return parsed;
 
-  const owned = await db
-    .select({ projectId: canvas.projectId })
-    .from(canvas)
-    .innerJoin(project, eq(canvas.projectId, project.id))
-    .where(and(eq(canvas.id, canvasId), eq(project.userId, userId)))
-    .limit(1);
-  if (owned.length === 0) return { ok: false, error: NOT_FOUND };
-  const { projectId } = owned[0];
+  const found = await db.query.canvas.findFirst({
+    where: eq(canvas.id, canvasId),
+    columns: { projectId: true },
+  });
+  if (!found) return { ok: false, error: NOT_FOUND };
+
+  const hasAccess = await hasAccessToProject(userId, found.projectId);
+  if (!hasAccess) return { ok: false, error: NOT_FOUND };
+
+  const { projectId } = found;
 
   const duplicate = await db.query.canvas.findFirst({
     where: and(

@@ -93,6 +93,7 @@ describe('Компонент MainDashboard', () => {
         id: 'proj-1',
         title: 'Новый тестовый проект',
         description: '',
+        inviteToken: null,
         createdAt: new Date('2024-01-01T00:00:00.000Z'),
         updatedAt: new Date('2024-01-01T00:00:00.000Z'),
         userId: 'user-1',
@@ -101,6 +102,7 @@ describe('Компонент MainDashboard', () => {
       id: string;
       title: string;
       description: string;
+      inviteToken: null,
       createdAt: Date;
       updatedAt: Date;
       userId: string;
@@ -160,6 +162,7 @@ describe('Компонент MainDashboard', () => {
         id: 'p1', 
         title: 'Переименованный проект',
         description: '',
+        inviteToken: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         userId: 'user-1',
@@ -168,6 +171,7 @@ describe('Компонент MainDashboard', () => {
       id: string; 
       title: string; 
       description: string;
+      inviteToken: null,
       createdAt: Date; 
       updatedAt: Date; 
       userId: string; 
