@@ -1,6 +1,7 @@
 import type { CanvasObject } from "./types";
 import TestCircleObject from "./TestCircleObject";
 import TestRectangleObject from "./TestRectangleObject";
+import ImageObject from "./ImageObject";
 
 type Props = {
   obj: CanvasObject;
@@ -17,6 +18,8 @@ function renderContent(obj: CanvasObject) {
       return <TestCircleObject obj={obj} />;
     case "testRectangle":
       return <TestRectangleObject obj={obj} />;
+    case "image":
+      return <ImageObject obj={obj} />;
     default:
       const _: never = obj;
       return _;

@@ -44,16 +44,38 @@ export default function CanvasEditor({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
 
+  {/* Здесь хранятся все объекты на канвасе*/}
+  const [objects, setObjects] = useState<CanvasObject[]>([]);
+
   const MIN_PERCENT = 20;
-  const MAX_PERCENT = 150;
+  const MAX_PERCENT = 500;
   const PERCENT_STEP = 10;
   const [percent, setPercent] = useState(100);
   const zoom = 100 / percent;
 
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  const applyZoom = (newPercent: number) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const newZoom = 100 / newPercent;
+    const factor = newZoom / zoom;
+    const newPanX = pan.x - (centerX - pan.x) * (factor - 1);
+    const newPanY = pan.y - (centerY - pan.y) * (factor - 1);
+
+    setPan({ x: newPanX, y: newPanY });
+    setPercent(newPercent);
+  };
+
   const [isZoomAnimating, setIsZoomAnimating] = useState(false);
 
-  const zoomIn  = () => animate(() => setPercent((percent) => Math.max(MIN_PERCENT, percent - PERCENT_STEP)));
-  const zoomOut = () => animate(() => setPercent((percent) => Math.min(MAX_PERCENT, percent + PERCENT_STEP)));
+  const zoomIn = () => animate(() => applyZoom(Math.max(MIN_PERCENT, percent - PERCENT_STEP)));
+  const zoomOut = () => animate(() => applyZoom(Math.min(MAX_PERCENT, percent + PERCENT_STEP)));
+  
   const animate = (fn: () => void) => {
     setIsZoomAnimating(true);
     fn();
@@ -63,7 +85,7 @@ export default function CanvasEditor({
   type Tool = "hand" | "pen";
   const [activeTool, setActiveTool] = useState<Tool>("hand");
 
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [pan, setPan] = useState({ x: -4500, y: -4500 });
   const [isPanning, setIsPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
@@ -72,7 +94,6 @@ export default function CanvasEditor({
     const isLeftHand = e.button === 0 && activeTool === "hand";
     const isMiddle = e.button === 1;
     if (!isLeftHand && !isMiddle) return;
-
     e.preventDefault();
     setIsPanning(true);
     panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
@@ -97,29 +118,55 @@ export default function CanvasEditor({
     setSelectedId(null);
   };
 
-  {/* Здесь хранятся все объекты
-      По умолчанию создаются два тестовых: круг и прямоугольник
-      !!! ИХ НАДО БУДЕТ УДАЛИТЬ !!! 
-      Они просто для демонстрации выделения и удаления по крестику*/}
-  const [objects, setObjects] = useState<CanvasObject[]>([
-  {
-    id: "circle-1",
-    type: "testCircle",
-    x: 200,
-    y: 200,
-    width: 120,
-    height: 120,
-  },
-  {
-    id: "rect-1",
-    type: "testRectangle",
-    x: 400,
-    y: 300,
-    width: 150,
-    height: 100,
-  },
-  ]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleAddImage = (url: string, naturalWidth: number, naturalHeight: number) => {
+    const MAX_SIZE = 500;
+    let width = naturalWidth;
+    let height = naturalHeight;
+    if (width > MAX_SIZE || height > MAX_SIZE) {
+      const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
+      width *= ratio;
+      height *= ratio;
+    }
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const сenterX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const newObject: CanvasObject = {
+      id: crypto.randomUUID(),
+      type: "image",
+      x: (сenterX - pan.x) / zoom - width / 2, 
+      y: (centerY - pan.y) / zoom - height / 2,
+      width,
+      height,
+      url
+    };
+    setObjects((prev) => [...prev, newObject]);
+  }
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleImageButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e1: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e1.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e2) => {
+      const src = e2.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        handleAddImage(src, img.naturalWidth, img.naturalHeight);
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+    e1.target.value = ""; 
+  };
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -181,7 +228,7 @@ export default function CanvasEditor({
 
   return (
     <div className="flex h-screen w-full flex-col bg-gray-200 overflow-hidden relative">
-      <div className="flex flex-1 relative overflow-hidden">
+      <div className="flex flex-1 relative overflow-hidden" ref={viewportRef}>
         
         {/* вьюпорт (не масштабируется)*/}
         <div 
@@ -197,18 +244,19 @@ export default function CanvasEditor({
         >
           {/* "сцена" (холст с серыми точками, масштабируется)*/}
           <div
-            className="absolute inset-0 bg-white"
+            className="absolute origin-top-left bg-white"
             style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            transformOrigin: "center",
-            transition: isPanning
-              ? "none"
-              : isZoomAnimating
-              ? "transform 200ms ease-out"
-              : "none",
-            backgroundImage:"radial-gradient(circle, #d4d4d8 2px, transparent 1px)",
-            backgroundSize: "32px 32px",
-          }}
+              width: 10000,
+              height: 10000,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transition: isPanning
+                ? "none"
+                : isZoomAnimating
+                ? "transform 200ms ease-out"
+                : "none",
+              backgroundImage:"radial-gradient(circle, #d4d4d8 2px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
           >
             <canvas
               ref={canvasRef}
@@ -332,9 +380,22 @@ export default function CanvasEditor({
         <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white"><Pencil size={20} /></button>
         <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white"><Type size={20} /></button>
         
-        <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white" title="Вставить изображение">
+        <button 
+          className="p-2 hover:bg-white/20 rounded-md transition-colors text-white" 
+          title="Вставить изображение"
+          onClick={handleImageButtonClick}
+        >
           <ImageIcon size={20} />
         </button>
+        
+        {/* Скрытое поле input */}
+        <input 
+          type="file" 
+          accept="image/*" 
+          ref={fileInputRef} 
+          onChange={handleFileChange} 
+          style={{ display: "none" }} 
+        />
         
         <button className="p-2 hover:bg-white/20 rounded-md transition-colors text-white" title="Прямоугольник">
           <Square size={20} />
