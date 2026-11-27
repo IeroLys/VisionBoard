@@ -14,4 +14,9 @@ export type TestCircleObject = BaseObject & {
   type: "testCircle";
 };
 
-export type CanvasObject = TestRectangleObject | TestCircleObject;
+export type ImageObject = BaseObject & {
+  type: "image";
+  url: string;
+};
+
+export type CanvasObject = TestRectangleObject | TestCircleObject | ImageObject;
